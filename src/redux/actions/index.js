@@ -11,6 +11,14 @@ export const ADD_ALL_UTENTI_TURNI = 'ADD_ALL_UTENTI_TURNI'
 
 export const SET_DRAGGED_EVENT = 'SET_DRAGGED_EVENT'
 
+export const ADD_ROLE = 'ADD_ROLE'
+
+export const REMOVE_ROLE = 'REMOVE_ROLE'
+
+export const ADD_USER = 'ADD_USER'
+
+export const REMOVE_USER = 'REMOVE_USER'
+
 export const addAllTurniAction = (allTurni) => {
     return {
         type: ADD_ALL_TURNI,
@@ -47,6 +55,34 @@ export const addTokenAction = (token) => {
 export const removeTokenAction = () => {
     return {
         type: REMOVE_TOKEN,
-        payload: null
+        payload: ""
     }
-} 
+}
+
+export const addRoleAction = (role) => {
+    return {
+        type: ADD_ROLE,
+        payload: role
+    }
+
+}
+export const removeRoleAction = () => {
+    return{
+        type: REMOVE_ROLE,
+        payload: ""
+    }
+}
+
+export const addUserAction = (user) => {
+    return{
+        type: ADD_USER,
+        payload: user
+    }
+}
+
+export const RemoveUserAction = () => {
+    return {
+        type: REMOVE_USER,
+        payload: {}
+    }
+}

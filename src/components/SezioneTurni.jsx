@@ -17,6 +17,7 @@ import { FaBackspace, FaCheck, FaPen, FaTrashAlt } from "react-icons/fa";
 export function SezioneTurni() {
   const dispatch = useDispatch();
   const allTurni = useSelector((state) => state.admin.allTurni);
+  const token = useSelector((state)=> state.auth.token)
   const [addNomeTurno, setAddNomeTurno] = useState("")
   const [addOraInizio, setAddOraInizio] = useState("");
   const [addOraFine, setAddOraFine] = useState("");
@@ -49,7 +50,7 @@ export function SezioneTurni() {
       const response = await fetch(`${import.meta.env.VITE_URL}/turni`, {
         method: "GET",
         headers: {
-          Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });

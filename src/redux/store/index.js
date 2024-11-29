@@ -5,6 +5,7 @@ import { authReducer } from "../reducers/auth";
 
 import storage from 'redux-persist/lib/storage'; 
 import { draggedEventReducers } from "../reducers/dragEvent";
+import { userReducer } from "../reducers/user";
 
 
 
@@ -20,7 +21,8 @@ const persistedAuthREducer = persistReducer(persistConfig, authReducer)
 const allReducers = combineReducers({
     admin: adminReducer,
     draggedEvent: draggedEventReducers,
-    auth: persistedAuthREducer
+    auth: persistedAuthREducer,
+    user: userReducer
 })
 
 
