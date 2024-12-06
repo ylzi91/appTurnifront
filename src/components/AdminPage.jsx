@@ -6,6 +6,7 @@ import RegistraUtente from "./RegistraUtente";
 import { addUserAction } from "../redux/actions";
 import { useEffect } from "react";
 import ProfilePage from "./ProfilePage";
+import GestisciFerie from "./GestisciFerie";
 
 export default function AdminPage() {
   const auth = useSelector((state) => state.auth);
@@ -44,6 +45,7 @@ export default function AdminPage() {
             <Route path="creazione_turni" element={<CreazioneTurni />} />
             <Route path="registra_utente" element={<RegistraUtente />} />
             <Route path="me" element={<ProfilePage/>}/>
+            <Route path="gestisci_ferie" element={<GestisciFerie/>}/>
           </Routes>
         </>
       )}

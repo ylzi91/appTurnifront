@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import moment from "moment";
 import { Calendar, momentLocalizer } from "react-big-calendar";
-import { Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Container, Dropdown, DropdownButton, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 export default function TurniUtente() {
   const [utenti, setUtenti] = useState([]);
@@ -10,7 +11,27 @@ export default function TurniUtente() {
   const [utenteTurni, setUtenteTurni] = useState([]);
   const auth = useSelector((state) => state.auth);
   const localizer = momentLocalizer(moment);
-  const [date, setDate] = useState(new Date());
+
+  moment.updateLocale("it", {
+    week: {
+      dow: 1, 
+    },
+  });
+  /////////////////////////
+  const getCurrentWeekMonday = () => {
+    const today = new Date();
+    return getMonday(today);
+  };
+
+  const getMonday = (date) => {
+    const day = date.getDay();
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+    return monday;
+  };
+  const [date, setDate] = useState(getCurrentWeekMonday());
+  //////////////////////
+
   const currentUtente = useSelector((state) => state.user.utente)
 
   const parseDate = (dateString) => {
@@ -18,30 +39,23 @@ export default function TurniUtente() {
     return new Date(year, month - 1, day); // Mese è 0-indicizzato
   };
 
-  const handleNavigate = (newDate) => {
-    setDate(newDate);
-    console.log(date);
-  };
+
 
   const getEventsForCalendar = (calendarId) => {
     return events.filter((event) => event.calendarId === calendarId);
   };
 
-  const getCurrentWeekMonday = () => {
-
-    const day = date.getDay();
-
-    const currentMonday = new Date(date);
-
-    currentMonday.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
-
   
-    return currentMonday;
+  const handleNavigate = (newDate) => {
+    const newMonday = getMonday(newDate)
+    setDate(newMonday);
+    console.log(date);
   };
 
   useEffect(() => {
     getUtenti();
     getTurniUtente();
+    console.log(date)
   }, [date]);
 
   const getUtenti = async () => {
@@ -98,14 +112,25 @@ export default function TurniUtente() {
           {utenti.map((utente) => {
             return (
               <>
-                <Col md={2} className="align-content-center">
-                 <span className={utente.email === currentUtente.email ? "bg-warning p-2 d-block text-center" : " d-block bg-info p-2 text-center"}>{utente.nome} {utente.cognome}</span> 
+                <Col md={2} className="align-content-center mt-2">
+              
+                 {utente.email === currentUtente.email && <Button variant="warning" className=" w-100">{utente.nome} {utente.cognome}</Button>} 
+                 {utente.email !== currentUtente.email && (
+                    <Dropdown>
+                      <Dropdown.Toggle variant="success" className=" w-100 text-white">
+                        {utente.nome} {utente.cognome}
+                      </Dropdown.Toggle>
+                        <Dropdown.Menu className=" w-100 text-center">
+                          <Link to={`/user_page/cambioturno/${utente.email}`}  className=" dropdown-item">Richiedi cambio</Link>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                 )}
                 </Col>
                 <Col md={10} className=" border-bottom border-1 border-black py-2">
                   <Calendar
-                    
                     localizer={localizer}
-                    date={getCurrentWeekMonday()}
+                    defaultDate={getCurrentWeekMonday()}
+                    date={date}
                     events={getEventsForCalendar(utente.email)}
                     onNavigate={handleNavigate}
                     defaultView="week"

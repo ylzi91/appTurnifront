@@ -13,7 +13,7 @@ export default function NavAdmin() {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             <Link to="/admin_page/creazione_turni" className=" nav-link">Tabella Turni</Link>
-            <Nav.Link href="#link">Gestisci ferie</Nav.Link>
+            <Link to="/admin_page/gestisci_ferie" className=" nav-link">Gestisci ferie</Link>
             <Nav.Link href="#link">Gestisci cambio turni</Nav.Link>
             <Link to="/admin_page/registra_utente" className=" nav-link">Registra utente</Link>
           </Nav>

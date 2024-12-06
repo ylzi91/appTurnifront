@@ -68,7 +68,7 @@ export function SezioneTurni() {
         {
           method: "PATCH",
           headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -95,7 +95,7 @@ export function SezioneTurni() {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -121,7 +121,7 @@ export function SezioneTurni() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
        

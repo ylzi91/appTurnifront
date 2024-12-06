@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
 import TurniUtente from "./TurniUtente";
 import RichiediFerie from "./RichediFerie";
+import CambioTurno from "./CambioTurno";
 
 
 export default function UserPage() {
@@ -43,6 +44,7 @@ export default function UserPage() {
             <Route path="me" element={<ProfilePage/>}/>
             <Route path="turni" element={<TurniUtente/>}/>
             <Route path="ferie" element={<RichiediFerie/>}/>
+            <Route path="cambioturno/:email" element={<CambioTurno/>}/>
           </Routes>
         </>
       )}

@@ -22,12 +22,26 @@ const localizer = momentLocalizer(moment);
 
 export function SezioneCalendario(){
     const [events, setEvents] = useState([]);
-    const [date, setDate] = useState(new Date());
+    ////////////////////////////////////////Data il lunedi
+    const getCurrentWeekMonday = () => {
+      const today = new Date();
+      return getMonday(today);
+    };
+  
+    const getMonday = (date) => {
+      const day = date.getDay();
+      const monday = new Date(date);
+      monday.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+      return monday;
+    };
+    const [date, setDate] = useState(getCurrentWeekMonday());
+    //////////////////////////////////////////////////////////////////
     const  draggedEvent = useSelector((state) => state.draggedEvent.dragEvent)
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [utenti, setUtenti] = useState([]);
     const [utenteTurni, setUtenteTurni] = useState([])
     const [utenteTurniDelete, setUtenteTurniDelete] = useState([])
+    const token = useSelector((state) => state.auth.token)
     const titleCounts = {};
     const dispatch = useDispatch();
   
@@ -37,6 +51,7 @@ export function SezioneCalendario(){
       },
     });
   
+
     const handleNavigate = (newDate) => {
       setDate(newDate);
       console.log(date);
@@ -64,21 +79,6 @@ export function SezioneCalendario(){
       nextMonday.setDate(date.getDate() + ((1 + 7 - day) % 7));
       return nextMonday;
     };
-    const getCurrentWeekMonday = () => {
-      // Ottiene il giorno della settimana corrente (0 = Domenica, 1 = Lunedì, ..., 6 = Sabato)
-      const day = date.getDay();
-      
-      // Crea una nuova data basata sulla data corrente
-      const currentMonday = new Date(date);
-      
-      // Calcola quanti giorni sottrarre per arrivare al lunedì della settimana corrente
-      // Se oggi è domenica (day = 0), sottrae 6 giorni per arrivare al lunedì precedente
-      // Altrimenti, sottrae (day - 1) giorni per arrivare al lunedì corrente
-      currentMonday.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
-      
-      // Restituisce la data del lunedì della settimana corrente
-      return currentMonday;
-  };
   
     useEffect(() => {
       getUtenti();
@@ -97,7 +97,7 @@ export function SezioneCalendario(){
         const response = await fetch("http://localhost:3001/utenti", {
           method: "GET",
           headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
@@ -121,7 +121,7 @@ export function SezioneCalendario(){
         const response = await fetch(`http://localhost:3001/utenteturno/settimanali?dataInizio=${date.toLocaleDateString('en-CA')}`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
@@ -149,7 +149,7 @@ export function SezioneCalendario(){
           const response = await fetch(`${import.meta.env.VITE_URL}/utenteturno`, {
             method: "DELETE",
             headers:{
-              Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             },
             body: JSON.stringify(utenteTurniDelete.map(utd => {
@@ -161,11 +161,12 @@ export function SezioneCalendario(){
               }
             }))
           })
+          setUtenteTurniDelete([])
           console.log("eventi", events)
           const response2 = await fetch(`${import.meta.env.VITE_URL}/utenteturno`, {
             method: "POST",
             headers: {
-              Authorization: `Bearer eyJhbGciOiJIUzM4NCJ9.eyJpYXQiOjE3MzI0NjkyMzgsImV4cCI6MTczMjkwMTIzOCwic3ViIjoieWx6aTkxQGdtYWlsLmNvbSJ9.4cTx5qxRszzROLFLzZJVdNsUNAR40UbA5W1a8ONtgEQzs_b2o28j9O2bNtbxJxND`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             },
             body: JSON.stringify(events.map(ev => {
@@ -216,7 +217,7 @@ export function SezioneCalendario(){
   
     return (
       <>
-        <Container fluid> 
+        <Container fluid className=" overflow-scroll"> 
          
           {utenti.map((utente, index) => {
             return (
@@ -233,7 +234,8 @@ export function SezioneCalendario(){
                       endAccessor="end"
                       selectable
                       defaultView="week"
-                      date={getCurrentWeekMonday()}
+                      views={['week']}
+                      date={date}
                       onNavigate={handleNavigate}
                       components={{
                         event: ({ event }) => (
@@ -248,7 +250,14 @@ export function SezioneCalendario(){
                             </Button>
                           </span>
                         ),
-                      }}
+                        toolbar: index !== 0 ? (props) => (
+                          <div>
+                              
+                          </div>
+                      ) : undefined
+                      }
+          
+                    }
                       onDropFromOutside={(args) => onDropFromOutside(utente.email, args)}
                       onEventDrop={(args) => {
                         moveEvent(utente.email, args);
@@ -268,7 +277,8 @@ export function SezioneCalendario(){
   
 
   
-        <Button onClick={deleteAndUpdateTurni}>Pulsante volante</Button>
+        <Button onClick={deleteAndUpdateTurni}>Aggiorna tabella</Button>
+
         <ListGroup>
           {events
             .filter((event) => {
