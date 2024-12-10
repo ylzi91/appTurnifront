@@ -12,7 +12,7 @@ export default function CreazioneTurni (){
                 <Col md={10}>
                     <SezioneCalendario/>
                 </Col>
-                <Col md={2} className=" bg-body-secondary" style={{height: '92vh'}}>
+                <Col md={2} className=" bg-body-secondary " style={{height: '92vh'}}>
                     <SezioneTurni/>
                 </Col>
             </Row>

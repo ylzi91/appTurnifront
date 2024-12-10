@@ -20,8 +20,11 @@
 }
 
 body{
-  background-image: url("./assets/img/Appturn.png");
-  background-repeat: no-repeat;
-  background-position: top center;
+  background-image: url("./assets/img/AppTurniBack.jpeg");
+  background-repeat: repeat;
+  background-attachment: fixed;
+  background-size: cover;
+
+
   
 }

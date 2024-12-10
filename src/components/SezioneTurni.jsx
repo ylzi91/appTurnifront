@@ -135,9 +135,9 @@ export function SezioneTurni() {
   };
   return (
     <>
-      <Container >
+      <Container>
         <Row>
-          <Col className=" d-flex flex-column align-content-center custom-scrollbar">
+          <Col className=" d-flex flex-column align-content-center custom-scrollbar ">
             <h4 className=" p-2 text-center"> I tuoi turni </h4>
             
               {allTurni.map((turno) => {
