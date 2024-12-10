@@ -137,6 +137,7 @@ export function SezioneCalendario(){
           start: parseDate(turno.giornoTurno),
           end: parseDate(turno.giornoTurno),
           calendarId: turno.utente.email,
+          oreTurno: turno.turno.durataTurno
         }));
         setEvents(newEvents);
       } catch (error) {
@@ -197,6 +198,7 @@ export function SezioneCalendario(){
             start,
             end,
             calendarId,
+            oreTurno: draggedEvent.oreTurno
           };
           setEvents((prev) => [...prev, newEvent]);
           useDispatch(setDraggedEvent(null));
@@ -217,17 +219,19 @@ export function SezioneCalendario(){
   
     return (
       <>
-        <Container fluid className=" overflow-scroll"> 
+        <Container fluid className=" mb-2 custom-scrollbar"> 
          
           {utenti.map((utente, index) => {
             return (
               <>
-                <Row className=" mt-2">
+                <Row className=" mt-2 bg-body-secondary p-2 border border-1 border-black rounded-1">
                   <Col md={2} className=" align-self-center">
-                    <h4>{utente.nome} {utente.cognome}</h4>
+                    <h6 className=" bg-info p-1 rounded-2 text-center text-white">{utente.nome} {utente.cognome}</h6>
                   </Col>
-                  <Col md={10} className="mt-2">
+                  <Col md={9} className="mt-2">
                     <DnDCalendar
+                      className=" bg-body-tertiary p-2 rounded-2 text-info"
+                      
                       localizer={localizer}
                       events={getEventsForCalendar(utente.email)}
                       startAccessor="start"
@@ -243,18 +247,15 @@ export function SezioneCalendario(){
                             {event.title}
                             <Button
                               variant="danger"
-                              onClick={() => deleteEvent(event, utente.email)}
+                              onClick={(e) => {
+                                 e.preventDefault() 
+                                 deleteEvent(event, utente.email)}}
                               className=" ms-2"
                             >
                               X
                             </Button>
                           </span>
-                        ),
-                        toolbar: index !== 0 ? (props) => (
-                          <div>
-                              
-                          </div>
-                      ) : undefined
+                        )
                       }
           
                     }
@@ -264,7 +265,30 @@ export function SezioneCalendario(){
                       }}
                       onSelectEvent={handleSelectEvent}
                       draggableAccessor={() => true}
+                      eventPropGetter={(event) => {
+                        if(event.idFromDb === null){
+                          return {
+                            className: " bg-warning"
+                          }
+                        }
+                        else {
+                          return {
+                            className: ""
+                          }
+                        }
+                      }
+                        
+                      }
                     />
+                  </Col>
+                  <Col md={1} className=" align-self-center p-2 rounded-2 bg-info text-white">
+                      <h6>Ore settimanali</h6>
+                      {events.reduce((acc, curev) => {
+                        if(curev.calendarId === utente.email)
+                          return acc + curev.oreTurno
+                        else
+                          return acc
+                      }, 0)}
                   </Col>
                 
                  </Row>
@@ -277,10 +301,10 @@ export function SezioneCalendario(){
   
 
   
-        <Button onClick={deleteAndUpdateTurni}>Aggiorna tabella</Button>
+        {events.findIndex((event) => event.idFromDb === null || utenteTurniDelete.length > 0) === -1 ? <Button className=" mb-2" disabled>Aggiorna tabella</Button> : <Button className=" mb-2" onClick={deleteAndUpdateTurni}>Aggiorna tabella</Button>}
 
         <ListGroup>
-          {events
+          {/*events
             .filter((event) => {
               const key = `${event.title}-${event.start}`;
               if (!titleCounts[key]) {
@@ -301,7 +325,7 @@ export function SezioneCalendario(){
                   {event.start.toLocaleDateString('en-CA')} {displayTitle}
                 </ListGroupItem>
               );
-            })}
+            })*/}
         </ListGroup>
         
       </>

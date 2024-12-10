@@ -19,8 +19,8 @@ export function SezioneTurni() {
   const allTurni = useSelector((state) => state.admin.allTurni);
   const token = useSelector((state)=> state.auth.token)
   const [addNomeTurno, setAddNomeTurno] = useState("")
-  const [addOraInizio, setAddOraInizio] = useState("");
-  const [addOraFine, setAddOraFine] = useState("");
+  const [addOraInizio, setAddOraInizio] = useState(null);
+  const [addOraFine, setAddOraFine] = useState(null);
   const [afterMidnight, setAfterMidnght] = useState(false)
   const [checkMod, setCheckMod] = useState("");
   const [deleteTurno, setDeleteTurno] = useState("")
@@ -135,9 +135,9 @@ export function SezioneTurni() {
   };
   return (
     <>
-      <Container className=" vh-100">
+      <Container >
         <Row>
-          <Col className="mt-2 d-flex flex-column align-content-center">
+          <Col className=" d-flex flex-column align-content-center custom-scrollbar">
             <h4 className=" p-2 text-center"> I tuoi turni </h4>
             
               {allTurni.map((turno) => {
@@ -150,10 +150,10 @@ export function SezioneTurni() {
                       draggable
                       className=" w-100"
                       onDragStart={() => {
-                        handleDragStart({ title: turno.nomeTurno });
+                        handleDragStart({ title: turno.nomeTurno, oreTurno: turno.durataTurno });
                       }}
                     >
-                      <span className=" d-block text-bg-info text-center rounded-1">{turno.nomeTurno} </span>
+                      <span className=" d-block text-bg-secondary text-center rounded-1">{turno.nomeTurno} </span>
                       {checkMod !== turno.nomeTurno ? (
                         <span>
                           {JSON.stringify(turno.oraInizio)
@@ -185,6 +185,7 @@ export function SezioneTurni() {
 
                           <Form.Select
                             size="sm"
+                          
                             onChange={(e) => setAddOraFine(e.target.value)}
                           >
                             {generateTimeSlots().map((gt) => {
@@ -226,7 +227,9 @@ export function SezioneTurni() {
                         onClick={(e) => {
                           e.preventDefault();
                           checkMod !== turno.nomeTurno
-                            ? setCheckMod(turno.nomeTurno)
+                            ? (setCheckMod(turno.nomeTurno),
+                              setAddOraInizio(turno.oraInizio),
+                              setAddOraFine(turno.oraFine))
                             : setCheckMod("");
                           setAddOraInizio("");
                           setAddOraFine("");

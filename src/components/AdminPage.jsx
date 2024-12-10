@@ -7,6 +7,7 @@ import { addUserAction } from "../redux/actions";
 import { useEffect } from "react";
 import ProfilePage from "./ProfilePage";
 import GestisciFerie from "./GestisciFerie";
+import GestisciCambi from "./GestisciCambi";
 
 export default function AdminPage() {
   const auth = useSelector((state) => state.auth);
@@ -35,7 +36,7 @@ export default function AdminPage() {
 
   return (
     <>
-      {auth.role !== "ADMIN" ? (
+      {(auth.role === "USER") ? (
         <h1>NON puoi stare sulla pagina</h1>
       ) : (
         <>
@@ -46,6 +47,7 @@ export default function AdminPage() {
             <Route path="registra_utente" element={<RegistraUtente />} />
             <Route path="me" element={<ProfilePage/>}/>
             <Route path="gestisci_ferie" element={<GestisciFerie/>}/>
+            <Route path="gestisci_cambi" element={<GestisciCambi/>}/>
           </Routes>
         </>
       )}

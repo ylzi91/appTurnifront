@@ -23,6 +23,10 @@ export default function Login() {
             navigate('/user_page/me')
             break
           }
+          case 'CAPO': {
+            navigate('/admin_page/creazione_turni')
+            break
+          }
         }    
       }      
     }   
@@ -48,6 +52,10 @@ export default function Login() {
                   }
                   case 'USER': {
                     navigate('/user_page/me')
+                    break
+                  }
+                  case 'CAPO': {
+                    navigate('/admin_page/creazione_turni')
                     break
                   }
                  }

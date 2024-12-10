@@ -6,8 +6,10 @@ import { Calendar, momentLocalizer } from "react-big-calendar";
 import { Button, Col, Container, Row } from "react-bootstrap";
 
 import { useSelector } from "react-redux";
+import { useCookies } from "react-cookie";
 
 function CambioTurno() {
+  const [cookies, setCookie] = useCookies(['utentiRispondenti'])
   const currentUtente = useSelector((state) => state.user.utente);
   const [rispostaRichOk, setRispostaRichOk] = useState(false)
   const [erroreRichiesta, setErroreRichiesta] = useState(null)
@@ -151,11 +153,34 @@ function CambioTurno() {
   return (
     <>
       <Container fluid>
+        <Row className=" mt-3 py-3">
+          <Col>
+            {selectedTurnoCur === null && (
+              <h4 className=" bg-info text-white p-2 text-center rounded-2">Seleziona sul calendario il tuo turno</h4>
+            )}
+            {selectedTurnoCur && (
+              <h4  className=" bg-info text-white p-2 text-center rounded-2">
+                E' stato selezionato il TUO turno {selectedTurnoCur.title} del
+                giorno {selectedTurnoCur.start.toLocaleDateString()}
+              </h4>
+            )}
+            {selectedTurnoCam === null && (
+              <h4 className=" bg-body-secondary p-2 text-center rounded-2">Seleziona sul calendario il turno del collega</h4>
+            )}
+            {selectedTurnoCam && (
+              <h4 className=" bg-body-secondary p-2 text-center rounded-2">
+                E' stato selezionato il turno {selectedTurnoCam.title} di{" "}
+                {utenteCambioObj.nome} {utenteCambioObj.cognome} del giorno{" "}
+                {selectedTurnoCam.start.toLocaleDateString()}
+              </h4>
+            )}
+          </Col>
+        </Row>
         <Row>
-          <Col md={2} className=" align-content-center bg-danger">
-            <h4>
+          <Col md={2} className=" align-content-center">
+            <h6 className=" bg-info text-white p-2 rounded-2 text-center">
               {currentUtente.nome} {currentUtente.cognome}
-            </h4>
+            </h6>
           </Col>
           <Col md={10}>
             <Calendar
@@ -172,9 +197,9 @@ function CambioTurno() {
             />
           </Col>
           <Col md={2} className=" align-content-center mt-2">
-            <h4>
+            <h6 className=" bg-body-secondary p-2 rounded-2 text-center">
               {utenteCambioObj.nome} {utenteCambioObj.cognome}
-            </h4>
+            </h6>
           </Col>
           <Col md={10} className=" mt-2">
             <Calendar
@@ -192,35 +217,20 @@ function CambioTurno() {
             />
           </Col>
         </Row>
-        <Row className=" mt-3 py-3 bg-body-secondary">
-          <Col>
-            {selectedTurnoCur === null && (
-              <h4>Seleziona sul calendario il tuo turno</h4>
-            )}
-            {selectedTurnoCur && (
-              <h4 className=" bg-body-tertiary py-2 text-center">
-                E' stato selezionato il TUO turno {selectedTurnoCur.title} del
-                giorno {selectedTurnoCur.start.toLocaleDateString()}
-              </h4>
-            )}
-            {selectedTurnoCam === null && (
-              <h4>Seleziona sul calendario il turno del collega</h4>
-            )}
-            {selectedTurnoCam && (
-              <h4 className=" bg-body-tertiary py-2 text-center">
-                E' stato selezionato il turno {selectedTurnoCam.title} di{" "}
-                {utenteCambioObj.nome} {utenteCambioObj.cognome} del giorno{" "}
-                {selectedTurnoCam.start.toLocaleDateString()}
-              </h4>
-            )}
-          </Col>
-        </Row>
         <Row>
-          <Col className=" d-flex justify-content-center mt-2">
+          <Col className=" d-flex flex-column justify-content-center mt-2">
             <Button onClick={(e) => {
                 e.preventDefault()
                 richiediCambio()
+                setCookie('utentiRispondenti', (prevRis) => {
+                   return JSON.stringify(...prevRis, utenteCambioObj);
+                }, {path: '/'})
             }}>Richiedi cambio</Button>
+            <Button variant="secondary" onClick={(e) => {
+              e.preventDefault()
+              setSelectedTurnoCam(null)
+              setSelectedTurnoCur(null)
+            }} className=" mt-2">Resetta</Button>
             {rispostaRichOk && <p className=" text-success"> Richiesta inviata</p>}
             {erroreRichiesta && <p className=" text-danger">{erroreRichiesta}</p>}
           </Col>

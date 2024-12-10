@@ -1,6 +1,5 @@
 
 
-
 $primary: #0b4989;
 $secondary: #0073a2;
 $info: #207fcc;
@@ -10,16 +9,11 @@ $success: #009c57;
 $warning: #e1c800;
 $danger: #ef1100;
 
-$theme-colors: (
-  "primary":    $primary,
-  "secondary":  $secondary,
-  "success":    $success,
-  "info":       $info,
-  "warning":    $warning,
-  "danger":     $danger,
-  "light":      $light,
-  "dark":       $dark,
-);
+.btn-danger, .btn-success, .btn-warning, .btn-secondary, .btn-primary{
+  color: #fff !important;
+}
+
+
 
 
 

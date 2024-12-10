@@ -9,3 +9,19 @@
   cursor: pointer;
 }
 
+*{
+  margin: 0;
+  padding: 0;
+}
+
+.custom-scrollbar{
+  overflow-y: scroll;
+  max-height: 80vh;
+}
+
+body{
+  background-image: url("./assets/img/Appturn.png");
+  background-repeat: no-repeat;
+  background-position: top center;
+  
+}
