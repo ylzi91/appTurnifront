@@ -8,6 +8,7 @@ import {
   Form,
   ListGroup,
   Row,
+  Spinner,
   ToggleButton,
 } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -16,9 +17,11 @@ import { FaBackspace, FaCheck, FaPen, FaTrashAlt } from "react-icons/fa";
 
 export function SezioneTurni() {
   const dispatch = useDispatch();
-  const allTurni = useSelector((state) => state.admin.allTurni);
+  const[allTurni,setAllTurni] = useState([])
   const token = useSelector((state)=> state.auth.token)
   const [addNomeTurno, setAddNomeTurno] = useState("")
+  const [spinnerAddTurno, setSpinnerAddTurno] = useState(false)
+  const [spinnerTurni, setSpinnerTurni] = useState(false)
   const [addOraInizio, setAddOraInizio] = useState(null);
   const [addOraFine, setAddOraFine] = useState(null);
   const [afterMidnight, setAfterMidnght] = useState(false)
@@ -47,6 +50,7 @@ export function SezioneTurni() {
 
   const getTurni = async () => {
     try {
+      setSpinnerTurni(true)
       const response = await fetch(`${import.meta.env.VITE_URL}/turni`, {
         method: "GET",
         headers: {
@@ -54,10 +58,19 @@ export function SezioneTurni() {
           "Content-Type": "application/json",
         },
       });
-      const content = await response.json();
-      dispatch(addAllTurniAction(content));
+      if(response.ok){
+        const content = await response.json();
+        setAllTurni(content)
+      }
+      else {
+        const content = await response.json()
+        throw new Error(content)
+      }
+      
     } catch (error) {
-      console.log("Errore nell fetch turni");
+      console.log("Errore nell fetch turni", error);
+    } finally {
+      setSpinnerTurni(false)
     }
   };
 
@@ -83,6 +96,9 @@ export function SezioneTurni() {
     } catch (error) {
       const content = await response.json();
       console.log(content);
+    } finally {
+      setAddOraFine(null)
+      setAddOraInizio(null)
     }
   };
 
@@ -90,6 +106,7 @@ export function SezioneTurni() {
 
   const addTurno = async () => {
     try {
+      setSpinnerAddTurno(true)
       const response = await fetch(
         `${import.meta.env.VITE_URL}/turni`,
         {
@@ -112,7 +129,7 @@ export function SezioneTurni() {
     } catch (error) {
       const content = await response.json();
       console.log(content);
-    }
+    } finally { setSpinnerAddTurno(false)}
   };
   const delTurno = async (turnoDelete) => {
     try {
@@ -137,23 +154,29 @@ export function SezioneTurni() {
     <>
       <Container>
         <Row>
-          <Col className=" d-flex flex-column align-content-center custom-scrollbar ">
-            <h4 className=" p-2 text-center"> I tuoi turni </h4>
+          <h4 className=" mt-2 p-2 text-center bg-info text-white rounded-2 border border-2 border-white"> I tuoi turni </h4>
+          <Col className=" d-flex flex-column align-content-center custom-scrollbar py-2">
             
-              {allTurni.map((turno) => {
+            
+              {spinnerTurni ? <Spinner className=" align-self-center" variant="info" animation="border"/> : allTurni?.sort((turnA, turnB) => {
+                let oraA = turnA.oraInizio ? turnA.oraInizio?.split(':')?.map(Number) : [0]
+                let oraB = turnB.oraInizio ? turnB.oraInizio?.split(':')?.map(Number) : [0]
+                return oraA[0] - oraB[0] 
+              }
+              )?.map((turno) => {
                 return (
                   <>
-                  <Dropdown className=" mt-2 ">
+                  <Dropdown className=" mt-2">
                     <Dropdown.Toggle
                       key={turno.nomeTurno}
                       action
                       draggable
-                      className=" w-100"
+                      className=" w-100 border border-2 shadow border-white rounded-5"
                       onDragStart={() => {
                         handleDragStart({ title: turno.nomeTurno, oreTurno: turno.durataTurno });
                       }}
                     >
-                      <span className=" d-block text-bg-secondary text-center rounded-1">{turno.nomeTurno} </span>
+                      <span className=" d-block text-bg-secondary text-center rounded-5 w-25 mx-auto">{turno.nomeTurno} </span>
                       {checkMod !== turno.nomeTurno ? (
                         <span>
                           {JSON.stringify(turno.oraInizio)
@@ -304,7 +327,7 @@ export function SezioneTurni() {
                       variant="success"
                       className=" mt-2"
                     >
-                      Aggiungi
+                      {spinnerAddTurno && <Spinner animation="border" size="sm"/>}Aggiungi
                     </Button>
                   </form>
                 </Accordion.Body>

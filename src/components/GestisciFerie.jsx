@@ -7,6 +7,7 @@ import {
   Container,
   Modal,
   Row,
+  Spinner,
   ToggleButton,
 } from "react-bootstrap";
 import { useSelector } from "react-redux";
@@ -29,13 +30,14 @@ function GestisciFerie() {
   const auth = useSelector((state) => state.auth);
   const [errore, setErrore] = useState("");
   const [arrayVuoto, setArrayVuoto] = useState(false);
+  const [spinnerConcedi, setSpinnerConcedi] = useState(null)
+  const [spinnerAggiorna, setSpinnerAggiorna] = useState(null)
+  const [spinnerFerie, setSpinnerFerie] = useState(false)
 
-  const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
   const getFerie = async () => {
     try {
+      setSpinnerFerie(true)
       const response = await fetch(
         `${import.meta.env.VITE_URL}/ferie?statoRichiesta=${st}`,
         {
@@ -61,11 +63,12 @@ function GestisciFerie() {
     } catch (error) {
       setErrore(error.message);
       console.log("Errore nella get", error.message);
-    }
+    } finally {setSpinnerFerie(false)}
   };
 
   const patchFerie = async (idFerie, statoRichiesta) => {
     try {
+      setSpinnerConcedi(idFerie)
       const response = await fetch(
         `${import.meta.env.VITE_URL}/ferie/aod/${idFerie}`,
         {
@@ -83,15 +86,16 @@ function GestisciFerie() {
         const content = await response.json();
         throw new Error(content.message);
       } else {
-        handleShow();
+        getFerie()
       }
     } catch (error) {
       console.log("Errore nella get", error.message);
-    }
+    } finally {setSpinnerConcedi(null)}
   };
 
   const saveFerieTurni = async (ferieId) => {
     try {
+      setSpinnerAggiorna(ferieId)
       const response = await fetch(
         `${import.meta.env.VITE_URL}/utenteturno/${ferieId}`,
         {
@@ -119,7 +123,7 @@ function GestisciFerie() {
         id: ferieId,
       });
       console.log("Errore nella saveTurniFerie", error.message);
-    }
+    } finally { setSpinnerAggiorna(null)}
   };
 
   const handleFilter = (value) => {
@@ -174,22 +178,22 @@ function GestisciFerie() {
         <Row className=" g-2">
           {arrayVuoto ? (
             <p>Non ci sono ferie</p>
-          ) : (
-            richiesteFerie?.map((ferie) => {
+          ) : spinnerFerie ? <Spinner className=" fs-6" variant="info" style={{width: 50, height: 50}} animation="border"/> : (
+            richiesteFerie?.sort((ferie1, ferie2) => ferie2.id - ferie1.id )?.map((ferie, index) => {
               const parts = ferie.dataInizio.split("-");
               const formattedDateIn = `${parts[2]}/${parts[1]}/${parts[0]}`;
               const partsFin = ferie.dataFine.split("-");
               const formattedDateFin = `${partsFin[2]}/${partsFin[1]}/${partsFin[0]}`;
-              //vediFerieTurni(ferie.id)
+             
               return (
                 <Col lg={3} key={ferie.id}>
-                  <Card>
+                  <Card className=" my-2">
                     <Card.Header>
                       <Card.Title>
-                        {ferie.utente.nome} {ferie.utente.cognome}
+                        {ferie.utente.nome} {ferie.utente.cognome} <span style={{fontSize: 10}}>id Richiesta: {ferie.id}</span> 
                       </Card.Title>
                     </Card.Header>
-                    <Card.Body>
+                    <Card.Body className={`bg-opacity-25 ${ferie.statoRichiesta === "APPROVATO_CAPO" ? "bg-success" : ferie.statoRichiesta === "RIFIUTATO_CAPO" ? "bg-danger" : ferie.statoRichiesta === "IN_CORSO" ? "bg-warning" : ""} `}>
                       <Card.Title>Dal {formattedDateIn}</Card.Title>
                       <Card.Title>Al {formattedDateFin}</Card.Title>
                       <div className=" d-flex justify-content-evenly">
@@ -200,14 +204,14 @@ function GestisciFerie() {
                                 <p>{ferie.statoRichiesta === "APPROVATO_CAPO" ? "Hai approvato la richiesta" : "Hai rifiutato la richiesta"}</p>
                                 {ferie.statoRichiesta !== "RIFIUTATO_CAPO" && (
                                    <Button
-                                  variant="success"
+                                  variant="info"
                                   className="text-white"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     saveFerieTurni(ferie.id);
                                   }}
                                 >
-                                  Aggiorna tabella turni
+                                  {spinnerAggiorna === ferie.id && <Spinner animation="border" variant="white" size="sm"/>} Aggiorna tabella turni
                                 </Button>
                                 )}
                                
@@ -215,20 +219,20 @@ function GestisciFerie() {
                             </>
                           )
                         ) : (
-                          <>
+                          <div className=" d-flex flex-column align-items-center w-100">
                             <Button
                               variant="success"
                               onClick={(e) => {
                                 patchFerie(ferie.id, "APPROVATO_CAPO");
                       
                               }}
-                              className=" w-50"
+                              className=" w-100 mb-2"
                             >
                               Concedi
                             </Button>
                             <Button
                               variant="danger"
-                              className=" w-50"
+                              className=" mb-2 w-100"
                               onClick={(e) => {
                                 e.preventDefault();
                                 patchFerie(ferie.id, "RIFIUTATO_CAPO");
@@ -236,7 +240,8 @@ function GestisciFerie() {
                             >
                               Rifiuta
                             </Button>
-                          </>
+                            {spinnerConcedi && <Spinner animation="border"/>}
+                          </div>
                         )}
                       </div>
                     </Card.Body>

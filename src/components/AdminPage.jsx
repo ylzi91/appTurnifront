@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import ProfilePage from "./ProfilePage";
 import GestisciFerie from "./GestisciFerie";
 import GestisciCambi from "./GestisciCambi";
+import GestisciUtenti from "./GestisciUtenti";
 
 export default function AdminPage() {
   const auth = useSelector((state) => state.auth);
@@ -48,6 +49,7 @@ export default function AdminPage() {
             <Route path="me" element={<ProfilePage/>}/>
             <Route path="gestisci_ferie" element={<GestisciFerie/>}/>
             <Route path="gestisci_cambi" element={<GestisciCambi/>}/>
+            <Route path="gestisci_utenti" element={<GestisciUtenti/>}/>
           </Routes>
         </>
       )}

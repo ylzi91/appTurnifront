@@ -43,7 +43,7 @@ function CambioTurno() {
 
   const utenteCambio = async () => {
     try {
-      const response = await fetch("http://localhost:3001/utenti/" + email, {
+      const response = await fetch(`${import.meta.env.VITE_URL}/utenti/` + email, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -60,7 +60,7 @@ function CambioTurno() {
   const getTurniUtente = async (utenteMail) => {
     try {
       const response = await fetch(
-        `http://localhost:3001/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
+        `${import.meta.env.VITE_URL}/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
           "en-CA"
         )}&email=${utenteMail}`,
         {
@@ -90,7 +90,7 @@ function CambioTurno() {
   const richiediCambio = async () => {
     try {
         const response = await fetch(
-          `http://localhost:3001/cambioturno/me`,
+          `${import.meta.env.VITE_URL}/cambioturno/me`,
           {
             method: "POST",
             headers: {
@@ -120,11 +120,17 @@ function CambioTurno() {
   }
 
   function handleCurSel(event) {
-    setSelectedTurnoCur(event);
+    if(selectedTurnoCur && selectedTurnoCur.idFromDb === event.idFromDb)
+      setSelectedTurnoCur(null);
+    else
+      setSelectedTurnoCur(event)
   }
 
   function handleCamSel(event) {
-    setSelectedTurnoCam(event);
+    if(selectedTurnoCam && selectedTurnoCam.idFromDb === event.idFromDb)
+     setSelectedTurnoCam(null);
+    else
+      setSelectedTurnoCam(event)
   }
 
   const handleNavigate = (newDate) => {
@@ -176,17 +182,18 @@ function CambioTurno() {
             )}
           </Col>
         </Row>
-        <Row>
-          <Col md={2} className=" align-content-center">
+        <Row >
+          <Col md={2} className=" align-content-center bg-body-secondary pt-2">
             <h6 className=" bg-info text-white p-2 rounded-2 text-center">
               {currentUtente.nome} {currentUtente.cognome}
             </h6>
           </Col>
-          <Col md={10}>
+          <Col md={10} className=" bg-body-secondary pb-2">
             <Calendar
               localizer={localizer}
               date={date}
               events={getEventsForCalendar(currentUtente.email)}
+              className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
               onNavigate={handleNavigate}
               defaultView="week"
               views={["week"]}
@@ -196,16 +203,17 @@ function CambioTurno() {
               onSelectEvent={handleCurSel}
             />
           </Col>
-          <Col md={2} className=" align-content-center mt-2">
-            <h6 className=" bg-body-secondary p-2 rounded-2 text-center">
+          <Col md={2} className=" align-content-center mt-2 bg-body-secondary pt-2">
+            <h6 className=" bg-warning p-2 rounded-2 text-center">
               {utenteCambioObj.nome} {utenteCambioObj.cognome}
             </h6>
           </Col>
-          <Col md={10} className=" mt-2">
+          <Col md={10} className=" bg-body-secondary pb-2">
             <Calendar
               localizer={localizer}
               date={date}
               events={getEventsForCalendar(utenteCambioObj.email)}
+              className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
               onNavigate={handleNavigate}
               defaultView="week"
               views={["week"]}
@@ -213,7 +221,6 @@ function CambioTurno() {
               endAccessor="end"
               selectable={true}
               onSelectEvent={handleCamSel}
-              toolbar={false}
             />
           </Col>
         </Row>
@@ -230,7 +237,7 @@ function CambioTurno() {
               e.preventDefault()
               setSelectedTurnoCam(null)
               setSelectedTurnoCur(null)
-            }} className=" mt-2">Resetta</Button>
+            }} className=" my-2">Resetta</Button>
             {rispostaRichOk && <p className=" text-success"> Richiesta inviata</p>}
             {erroreRichiesta && <p className=" text-danger">{erroreRichiesta}</p>}
           </Col>

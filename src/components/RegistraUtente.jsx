@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Form } from "react-bootstrap";
+import { Button, Card, Form, Spinner } from "react-bootstrap";
 import { useSelector } from "react-redux";
 
 export default function RegistraUtente() {
@@ -9,10 +9,12 @@ export default function RegistraUtente() {
   const [cognome, setCognome] = useState("");
   const [utenteCapo, checkUtenteCapo] = useState(false);
   const [response, setResponse] = useState("")
+  const [spinner, setSpinner] = useState(false)
   const auth = useSelector((state) => state.auth);
 
   const register = async () => {
     try {
+        setSpinner(true)
         let content;
         const response = await fetch(`${import.meta.env.VITE_URL}/utenti/${!utenteCapo ? 'utente' : 'capo'}`, {
             method: 'POST',
@@ -42,7 +44,7 @@ export default function RegistraUtente() {
        
     } catch (error){
             setResponse(error.message)
-    }
+    } finally {setSpinner(false)}
 }
 
   return (
@@ -112,7 +114,7 @@ export default function RegistraUtente() {
               )}
 
               <Button variant="success" type="submit">
-                Effettua Registrazione
+                {spinner && <Spinner animation="border" size="sm"/>} Effettua Registrazione
               </Button>      
             </Form>
             {response !== "" && <h4>{response}</h4>}

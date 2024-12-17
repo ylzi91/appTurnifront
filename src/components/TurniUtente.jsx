@@ -16,6 +16,7 @@ export default function TurniUtente() {
   const [utenti, setUtenti] = useState([]);
   const [events, setEvents] = useState([]);
   const [utenteTurni, setUtenteTurni] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null)
   const [mailUt, setMailUt] = useState("");
   const auth = useSelector((state) => state.auth);
   const localizer = momentLocalizer(moment);
@@ -65,7 +66,7 @@ export default function TurniUtente() {
 
   const getUtenti = async () => {
     try {
-      const response = await fetch("http://localhost:3001/utenti", {
+      const response = await fetch(`${import.meta.env.VITE_URL}/utenti`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${auth.token}`,
@@ -87,10 +88,17 @@ export default function TurniUtente() {
     else setMailUt("");
   };
 
+  const handleSelEvent = (event) => {
+    if(selectedEvent && selectedEvent.idFromDb === event.idFromDb)
+      setSelectedEvent(null)
+    else
+      setSelectedEvent(event)
+  }
+
   const getTurniUtente = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
+        `${import.meta.env.VITE_URL}/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
           "en-CA"
         )}`,
         {
@@ -129,7 +137,7 @@ export default function TurniUtente() {
           .map((utente) => {
             return (
               <>
-                <Row className=" bg-body-secondary rounded-2 mt-4">
+                <Row className=" bg-body-secondary rounded-2 mt-2 border border-2 border-white mx-1 mb-2 pb-2">
                   <Col md={2} className="align-content-center mt-2">
                     {utente.email === currentUtente.email && (
                       <>
@@ -142,7 +150,7 @@ export default function TurniUtente() {
                           }}
                           className=" w-100 text-white mb-2"
                         >
-                          {utente.nome} {utente.cognome}
+                          <img src={utente.immagine} width={50} height={50} className=" rounded-circle"/> {utente.nome} {utente.cognome} 
                         </Button>
                         <span className=" bg-info p-1 rounded-2 text-warning">
                           Ore settimanali: {events.reduce((acc, curev) => {
@@ -185,7 +193,8 @@ export default function TurniUtente() {
                       views={["week"]}
                       startAccessor="start"
                       endAccessor="end"
-                      selectable={false}
+                      selectable={true}
+                      onSelectEvent={handleSelEvent}
                       components={{
                         event: ({ event }) => (
                           <span style={{ fontSize: "0.8em" }}>
@@ -197,7 +206,9 @@ export default function TurniUtente() {
                         ),
                       }}
                     />
+                    
                   </Col>
+                  <Col>{selectedEvent?.calendarId === utente.email ? <span>Dalle {selectedEvent?.oraInizio?.slice(0,-3)} alle {selectedEvent?.oraFine?.slice(0,-3)}</span> : <span>Seleziona turno per vedere l'orario</span>} </Col>
                 </Row>
               </>
             );

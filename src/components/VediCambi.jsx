@@ -80,7 +80,7 @@ function VediCambi() {
                     handleStato();
                   }}
                   variant={selBtn === btn ? "primary" : "outline-primary"}
-                  className=" me-2"
+                  className=" me-2 mb-2"
                 >
                   {btn}
                 </Button>
@@ -91,14 +91,14 @@ function VediCambi() {
         <Row>
           <Col>
             {cambiTurni.message !== undefined && (
-              <span>Non ci sono cambi in {stato}</span>
+              <span className=" bg-white p-1 rounded-2 text-info fw-bold">Non ci sono cambi in {stato}</span>
             )}
             {cambiTurni.length >= 0 &&
-              cambiTurni.map((cambio) => {
+              cambiTurni?.sort((cambio1, cambio2) => cambio2.id - cambio1.id)?.map((cambio) => {
                 return (
                   <Card
                     key={cambio.id}
-                    className=" mt-2 text-center shadow position-relative pt-4"
+                    className=" my-2 text-center shadow position-relative pt-4"
                     body
                   >
                     <div className=" bg-body-secondary p-2 rounded-2 mb-2 mx-auto">
@@ -119,7 +119,11 @@ function VediCambi() {
                         <span className=" d-block bg-info rounded-5 text-white mt-2 p-2">Turno {cambio.utenteRispondenteTurno.turno.nomeTurno}</span>
                       </p>
                     </div>
-                    <p>Stato: {(cambio.statoRichiesta === "APPROVATA_RISPONDENTE"  && cambio.utenteRispondenteTurno.utente.email === currentUtente.email ) ? 
+                    <p>Stato: {(cambio.statoRichiesta === "RIFIUTATA_RISPONDENTE" && cambio.utenteRichiedenteTurno.utente.email === currentUtente.email) ? 
+                    "La richiesta è stata rifutata dal collega" :  
+                    (cambio.statoRichiesta === "RIFIUTATA_RISPONDENTE" && cambio.utenteRispondenteTurno.utente.email === currentUtente.email) ? 
+                    "Hai rifiutato la richista" : 
+                    (cambio.statoRichiesta === "APPROVATA_RISPONDENTE"  && cambio.utenteRispondenteTurno.utente.email === currentUtente.email ) ? 
                     "Hai approvato la richiesta" : 
                     cambio.statoRichiesta === "APPROVATA_RISPONDENTE"  && cambio.utenteRichiedenteTurno.utente.email === currentUtente.email ? 
                     "Il collega ha accettato la richiesta" : 
@@ -140,7 +144,10 @@ function VediCambi() {
                             e.preventDefault()
                             patchCambio(cambio.id, "APPROVATA_RISPONDENTE")
                         }} className=" me-2 text-white">Accetta</Button>
-                        <Button variant="danger" className=" text-white">Rifiuta</Button>
+                        <Button variant="danger" onClick={(e) => {
+                            e.preventDefault()
+                            patchCambio(cambio.id, "RIFIUTATA_RISPONDENTE")
+                        }}  className=" text-white">Rifiuta</Button>
                         </>
                     )}
                   </Card>

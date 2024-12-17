@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Container, Row } from "react-bootstrap";
+import { Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import Aldoo from "../assets/img/Aldooo.png"
 
 function GestisciCambi() {
   const token = useSelector((state) => state.auth.token);
   const [cambiTurni, setCambiTurni] = useState([]);
+  const [spinnerTurni, setSpinnerTurni] = useState(false)
 
   const tuttiCambi = async () => {
     try {
+      setSpinnerTurni(true)
       const response = await fetch(`${import.meta.env.VITE_URL}/cambioturno`, {
         method: "GET",
         headers: {
@@ -21,6 +24,9 @@ function GestisciCambi() {
         else setCambiTurni(content);
       }
     } catch (error) {}
+    finally {
+      setSpinnerTurni(false)
+    }
   };
 
   const patchCambio = async (idCambio, statoRichiesta) => {
@@ -56,10 +62,10 @@ function GestisciCambi() {
     <>
       <Container fluid>
         <Row>
-         
-            {cambiTurni.length === 0 && <span>Non ci sono cambi</span>}
+           
+            {spinnerTurni ? <Spinner style={{width: 50, height: 50}} className=" border-0" animation="border" size="sm"><img className=" rounded-circle" src={Aldoo} width={50} height={50} alt="" /></Spinner> : cambiTurni.length === 0 && <span>Non ci sono cambi</span>}
             {cambiTurni.length >= 0 &&
-              cambiTurni.map((cambio) => {
+              cambiTurni?.sort((cambio1, cambio2) => cambio2.id - cambio1.id)?.map((cambio) => {
                 return ( 
                 <Col md={4}>
                   <Card

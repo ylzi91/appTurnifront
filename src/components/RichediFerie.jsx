@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Container, Form, Row } from "react-bootstrap";
+import { Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { useSelector } from "react-redux";
 import "react-datepicker/dist/react-datepicker.css";
@@ -8,6 +8,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 export default function RichiediFerie() {
   const auth = useSelector((state) => state.auth);
   const [errore, setErrore] = useState("")
+  const [spinner, setSpinner] = useState(false)
   const [dataInizio, setDataInizio] = useState(
     new Date().toLocaleDateString("en-CA")
   );
@@ -21,6 +22,7 @@ export default function RichiediFerie() {
 
   const postFerie = async () => {
     try {
+      setSpinner(true)
       const response = await fetch(`${import.meta.env.VITE_URL}/ferie`, {
         method: "POST",
         headers: {
@@ -30,6 +32,7 @@ export default function RichiediFerie() {
         body: JSON.stringify({ dataInizio, dataFine }),
       });
       if (!response.ok){
+        
         const content = await response.json()
         throw new Error(content.message);
       }
@@ -40,7 +43,10 @@ export default function RichiediFerie() {
       console.log("Errore post",error.message);
       setErrore(error.message)
       setTimeout(() => {setErrore("")}, 4000)
+    } finally {
+      setSpinner(false)
     }
+
   };
 
   const getFerie = async () => {
@@ -121,7 +127,7 @@ export default function RichiediFerie() {
                       setDataFine(date.toLocaleDateString("en-CA"))
                     }
                   />
-                  <Button className=" mt-2" onClick={postFerie}>Invia richiesta</Button>
+                  <Button className=" mt-2" onClick={postFerie}>{!spinner ? "Invia richiesta" : <Spinner size="sm" animation="border"/>} </Button>
                   {errore !== "" && <p className=" text-danger">{errore}</p>}
                 </div>
               </Card.Body>
@@ -132,7 +138,7 @@ export default function RichiediFerie() {
           <Col lg={4}>
           {giorniFerie.length >= 0 ? giorniFerie.map((gf)=> {
             return (
-              <Card key={gf.id} className=" mt-2 shadow position-relative"  body>
+              <Card key={gf.id} className=" my-2 shadow position-relative"  body>
                 <p>Data inizio: {gf.dataInizio}</p>
                 <p>Data fine: {gf.dataFine}</p>
                 <p>Stato: {gf.statoRichiesta === 'APPROVATO_CAPO' ? "Approvate" : gf.statoRichiesta === 'IN_CORSO' ? "In corso" : "Rifiutate"}</p>
@@ -142,7 +148,7 @@ export default function RichiediFerie() {
                 }}><TiDeleteOutline size={30}/></p>}
               </Card>
             )
-          }): "Non hai ancora richiesto delle ferie"}
+          }): <span className=" d-block bg-white p-2 mt-2 rounded-2">Non hai ancora richiesto delle ferie</span>}
                 
           </Col>
         </Row>

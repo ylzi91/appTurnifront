@@ -9,6 +9,7 @@ import {
   Dropdown,
   Form,
   Row,
+  Spinner,
 } from "react-bootstrap";
 import { FaPen } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,6 +25,9 @@ export default function ProfilePage() {
   const [cognome, setCognome] = useState(meUser.cognome);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [spinnerNome, setSpinnerNome] = useState(false)
+  const [spinnerAvatar, setSpinnerAvatar] = useState(false)
+  const [spinnerAggPass, setSpinnerAggPass] = useState(false)
   const [errorePas, setErrorePas] = useState(null)
   const [modNC, setModNC] = useState(false);
   const [file, setFile] = useState(null);
@@ -38,6 +42,7 @@ export default function ProfilePage() {
     formData.append("avatar", selectedFile);
 
     try {
+      setSpinnerAvatar(true)
       const response = await fetch(
         `${import.meta.env.VITE_URL}/utenti/me/avatar`,
         {
@@ -56,11 +61,12 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error("Error uploading the file:", error);
-    }
+    } finally{setSpinnerAvatar(false)}
   };
 
   const putNomeCognome = async () => {
     try {
+      setSpinnerNome(true)
       const response = await fetch(`${import.meta.env.VITE_URL}/utenti/me/nome_cognome`, {
         method: "PUT",
         headers: {
@@ -82,7 +88,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.log("Errore post",error.message);
       
-    }
+    } finally { setSpinnerNome(false)}
   };
 
   const patchPassword = async () => {
@@ -98,6 +104,7 @@ export default function ProfilePage() {
     }
     else
     try {
+      setSpinnerAggPass(true)
       const response = await fetch(`${import.meta.env.VITE_URL}/utenti/me/password`, {
         method: "PATCH",
         headers: {
@@ -131,7 +138,7 @@ export default function ProfilePage() {
         setErrorePas(null)
       }, 5000);
       
-    }
+    } finally {setSpinnerAggPass(false)}
   };
 
 
@@ -144,7 +151,7 @@ export default function ProfilePage() {
       <Container fluid >
         <Row className=" justify-content-center">
           <Col md={4}>
-            <Card className=" d-flex flex-column justify-content-center rounded-5">
+            <Card className=" d-flex flex-column justify-content-center rounded-5 mb-2">
               <div className=" mx-auto position-relative mt-2">
                 <Card.Img
                   variant="top"
@@ -162,7 +169,7 @@ export default function ProfilePage() {
                   onClick={handleButtonClick}
                   className=" bg-warning position-absolute rounded-circle start-0 ms-5 mt-3 p-2 pointer"
                 >
-                  <FaPen />
+                  {!spinnerAvatar ? <FaPen /> : <Spinner animation="border" size="sm" variant="info"/> } 
                 </Badge>
               </div>
 
@@ -177,7 +184,7 @@ export default function ProfilePage() {
                     <>
                       <Form.Control type="text" onChange={(e) => setNome(e.target.value)} className=" mb-2" value={nome}/>
                       <Form.Control type="text" className="mb-2" onChange={(e) => setCognome(e.target.value)} value={cognome}/>
-                      <Button onClick={() => putNomeCognome()}>Aggiorna nome e cognome</Button>
+                      <Button onClick={() => putNomeCognome()}>{!spinnerNome ? "Aggiorna nome e cognome" : <Spinner animation="border" size="sm"/>}</Button>
                     </>
                   )}
                   <FaPen onClick={() => setModNC(!modNC)} className=" d-block rounded-5 w-100 mt-2 text-warning pointer" />
@@ -201,11 +208,11 @@ export default function ProfilePage() {
                         type="password"
                         className="mb-2"
                       />
-                      <Button variant="primary" className=" mx-auto" onClick={(e) => {
+                      <Button variant="primary" disabled={spinnerAggPass ? true : false} className=" mx-auto" onClick={(e) => {
                         e.preventDefault()
                         patchPassword()
                       }}>
-                        Aggiorna password
+                        {spinnerAggPass && <Spinner animation="border" size="sm"/>} Aggiorna password
                       </Button>
                       {errorePas === null ? "" : errorePas.error ? <span className=" text-danger">{errorePas.message}</span> : <span className=" text-success">{errorePas.message}</span>}
                     </Accordion.Body>
