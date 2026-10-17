@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import Aldoo from "../assets/img/Aldooo.png"
 
@@ -65,7 +65,7 @@ function GestisciCambi() {
            
             {spinnerTurni ? <Spinner style={{width: 50, height: 50}} className=" border-0" animation="border" size="sm"><img className=" rounded-circle" src={Aldoo} width={50} height={50} alt="" /></Spinner> : cambiTurni.length === 0 && <span>Non ci sono cambi</span>}
             {cambiTurni.length >= 0 &&
-              cambiTurni?.sort((cambio1, cambio2) => cambio2.id - cambio1.id)?.map((cambio) => {
+              [...cambiTurni].sort((cambio1, cambio2) => cambio2.id - cambio1.id).map((cambio) => {
                 return ( 
                 <Col md={4} key={cambio.id}>
                   <Card
@@ -96,6 +96,14 @@ function GestisciCambi() {
                     </div>
                     {cambio.statoRichiesta === "APPROVATA_RISPONDENTE" && (
                       <>
+                        {cambio.avvisi?.length > 0 && (
+                          <Alert variant="warning" className=" py-2 fs-6">
+                            <strong>Attenzione:</strong>
+                            {cambio.avvisi.map((avviso) => (
+                              <div key={avviso}>{avviso}</div>
+                            ))}
+                          </Alert>
+                        )}
                         <Button
                           variant="success"
                           onClick={(e) => {
