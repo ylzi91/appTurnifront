@@ -15,7 +15,7 @@ export default function NavAdmin() {
           <Nav className="me-auto">
             <Link to="/admin_page/creazione_turni" className=" nav-link">Tabella Turni</Link>
             <Link to="/admin_page/gestisci_ferie" className=" nav-link">Gestisci ferie</Link>
-            <Nav.Link href="/admin_page/gestisci_cambi">Gestisci cambio turni</Nav.Link>
+            <Link to="/admin_page/gestisci_cambi" className=" nav-link">Gestisci cambio turni</Link>
             <Link to="/admin_page/registra_utente" className=" nav-link">Registra utente</Link>
             <Link to="/admin_page/gestisci_utenti" className=" nav-link">Vedi e gestisci Utenti</Link>
           </Nav>

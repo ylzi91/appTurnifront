@@ -44,6 +44,8 @@ export function SezioneCalendario() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [spinnerCalendar, setSpinnerCalendar] = useState(false);
   const [spinnerUpdate, setSpinnerUpdate] = useState(false);
+  const [oreMensUtenti, setOreMensUtenti] = useState([]);
+  const [settMens, setSettMens] = useState(false);
   const [utenti, setUtenti] = useState([]);
   const [utenteTurni, setUtenteTurni] = useState([]);
   const [utenteTurniDelete, setUtenteTurniDelete] = useState([]);
@@ -93,8 +95,10 @@ export function SezioneCalendario() {
   }, [date]);
 
   useEffect(() => {
-    console.log("efevervre", events);
-  }, [events]);
+    if(utenti.length > 0){
+      oreMensiliUtenti();
+    }
+   }, [utenti]);
 
   const getUtenti = async () => {
     try {
@@ -108,7 +112,8 @@ export function SezioneCalendario() {
       });
       const content = await response.json();
       setUtenti(content);
-      dispatch(addAllUtentiAction(content));
+
+      //dispatch(addAllUtentiAction(content));
     } catch (error) {
       console.log("Errore nell fetch turni");
     } finally {
@@ -138,32 +143,66 @@ export function SezioneCalendario() {
           },
         }
       );
-      if(response.ok){
+      if (response.ok) {
         const content = await response.json();
-      //setUtenteTurni(content);
-      //dispatch(addAllUtentTurniAction(content));
-      
-      const newEvents = content.map((turno, index) => ({
-        id: index,
-        idFromDb: turno.id,
-        title: turno.turno.nomeTurno,
-        start: parseDate(turno.giornoTurno),
-        end: parseDate(turno.giornoTurno),
-        calendarId: turno.utente.email,
-        oreTurno: turno.turno.durataTurno,
-        oraInizio: turno.turno.oraInizio,
-        oraFine: turno.turno.oraFine,
-      }));
-      console.log("NewEvents",newEvents)
-      setEvents(newEvents);
+        //setUtenteTurni(content);
+        //dispatch(addAllUtentTurniAction(content));
+
+        const newEvents = content.map((turno, index) => ({
+          id: index,
+          idFromDb: turno.id,
+          title: turno.turno.nomeTurno,
+          start: parseDate(turno.giornoTurno),
+          end: parseDate(turno.giornoTurno),
+          calendarId: turno.utente.email,
+          oreTurno: turno.turno.durataTurno,
+          oraInizio: turno.turno.oraInizio,
+          oraFine: turno.turno.oraFine,
+        }));
+        console.log("NewEvents", newEvents);
+        setEvents(newEvents);
+      } else {
+        const content = await response.json();
+        throw new Error(content);
       }
-      else {
-        const content = await response.json()
-        throw new Error(content)
-      }
-      
     } catch (error) {
       console.log("content", error);
+    }
+  };
+
+  const oreMensiliUtenti = async () => {
+    const emailForFetch = utenti
+      .map((utente) => `emails=${encodeURIComponent(utente.email)}`)
+      .join("&");
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const lastDay = new Date(year, month + 1, 0);
+    const firstDay = new Date(year, month, 1);
+
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_URL
+        }/utenteturno/ore_totali_utente?${emailForFetch}&dataInizio=${firstDay.toLocaleDateString(
+          "en-CA"
+        )}&dataFine=${lastDay.toLocaleDateString("en-CA")}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.ok) {
+        const content = await response.json();
+        setOreMensUtenti(content);
+      } else {
+        const content = await response.json();
+        throw new Error(content.message);
+      }
+    } catch (error) {
+      console.log("Errore nella get", error.message);
     }
   };
 
@@ -208,14 +247,13 @@ export function SezioneCalendario() {
         ),
       });
       getTurniUtente();
+      oreMensiliUtenti();
 
       const content = await response2.json();
     } catch (error) {
       console.log("Errore nell'update");
     } finally {
-
-        setSpinnerUpdate(false);
-      
+      setSpinnerUpdate(false);
     }
   };
 
@@ -234,10 +272,10 @@ export function SezioneCalendario() {
           oraFine: draggedEvent.oraFine,
         };
         setEvents((prev) => [...prev, newEvent]);
-        useDispatch(setDraggedEvent(null));
+        dispatch(setDraggedEvent(null));
       }
     },
-    [draggedEvent]
+    [draggedEvent, dispatch]
   );
 
   const moveEvent = useCallback((calendarId, { event, start, end }) => {
@@ -250,59 +288,104 @@ export function SezioneCalendario() {
     return events.filter((event) => event.calendarId === calendarId);
   };
 
+  const countEventsByTitleAndDate = (events) => {
+    const counts = {};
+    events.forEach((event) => {
+      const key = `${event.title}-${event.start.toLocaleDateString("en-CA")}`;
+      console.log("key", key);
+      if (!counts[key]) {
+        counts[key] = 0;
+      }
+      counts[key]++;
+    });
+    return counts;
+  };
+
+  const eventCounts = countEventsByTitleAndDate(events);
+
   return (
     <>
-      <Container fluid className=" mb-2 custom-scrollbar bg-body-tertiary py-2 bg-opacity-75 rounded-2 border border-2 border-white">
-        
-        {spinnerCalendar ? <Spinner
+      <Container
+        fluid
+        className=" mb-2 custom-scrollbar bg-body-tertiary py-2 bg-opacity-75 rounded-2 border border-2 border-white"
+      >
+        <Row>
+          <Col className=" d-flex justify-content-end">
+            <p className="mb-0">
+              Ore:{" "}
+              <span
+                className=" text-info text-decoration-underline pointer"
+                onClick={() => setSettMens(false)}
+              >
+                Settimanali
+              </span>{" "}
+              |{" "}
+              <span
+                onClick={() => setSettMens(true)}
+                className=" text-info text-decoration-underline pointer"
+              >
+                Mensili
+              </span>
+            </p>
+          </Col>
+        </Row>
+        {spinnerCalendar ? (
+          <Spinner
             className=" fs-2 align-self-center"
             variant="secondary"
             animation="border"
-          /> : utenti.sort((utenteA, utenteB) => {
-          if(utenteB.cognome > utenteA.cognome)
-            return -1
-          else if (utenteB.cognome < utenteA.cognome)
-            return 1
-          else
-            return 0
-        }).map((utente, index) => {
-          return (
-            <>
-              <Row className=" mt-2 bg-body-secondary p-2 border border-1 border-black rounded-1">
-                <Col md={2} className=" align-self-center">
-                  <div className=" d-flex justify-content-beetween bg-info p-2 rounded-2 text-white">
-                    <img
-                      src={utente.immagine}
-                      className=" rounded-circle"
-                      width={50}
-                      height={50}
-                    />{" "}
-                    <h6 className=" align-self-center mb-0 ms-2">{utente.nome} {utente.cognome}</h6>
-                  </div>
-                </Col>
-                <Col md={9} className="mt-2">
-                  <DnDCalendar
-                    className=" bg-body-tertiary p-2 rounded-2 text-info"
-                    localizer={localizer}
-                    events={getEventsForCalendar(utente.email)}
-                    startAccessor="start"
-                    endAccessor="end"
-                    selectable
-                    defaultView="week"
-                    views={["week"]}
-                    date={date}
-                    onNavigate={handleNavigate}
-                    components={{
-                      event: ({ event }) => (
-                       
-                           <div className=" d-flex align-content-center justify-content-between flex-wrap">
-                            <div className=" d-flex align-self-center">{event.title}</div>
-                            <div style={{fontSize: 6}} className=" d-flex align-self-center">
-                              {event?.oraInizio?.slice(0, -3)}{" / "}
-                              {event?.oraFine?.slice(0, -3)}
-                            </div>
-                            
-                         
+          />
+        ) : (
+          utenti
+            .sort((utenteA, utenteB) => {
+              if (utenteB.cognome > utenteA.cognome) return -1;
+              else if (utenteB.cognome < utenteA.cognome) return 1;
+              else return 0;
+            })
+            .map((utente, index) => {
+              return (
+                <>
+                  <Row className=" mt-2 bg-body-secondary p-2 border border-1 border-black rounded-1">
+                    <Col md={2} className=" align-self-center">
+                      <div className=" d-flex justify-content-beetween bg-info p-2 rounded-2 text-white">
+                        <img
+                          src={utente.immagine}
+                          className=" rounded-circle"
+                          width={50}
+                          height={50}
+                        />{" "}
+                        <h6 className=" align-self-center mb-0 ms-2">
+                          {utente.nome} {utente.cognome}
+                        </h6>
+                      </div>
+                    </Col>
+                    <Col md={9} className="mt-2">
+                      <DnDCalendar
+                        className=" bg-body-tertiary p-2 rounded-2 text-info"
+                        localizer={localizer}
+                        events={getEventsForCalendar(utente.email)}
+                        startAccessor="start"
+                        endAccessor="end"
+                        selectable
+                        defaultView="week"
+                        views={["week"]}
+                        date={date}
+                        onNavigate={handleNavigate}
+                        components={{
+                          event: ({ event }) => (
+                            <div className="d-flex align-content-center justify-content-between flex-wrap">
+                              <div className=" d-flex align-self-center">
+                                {event.title}
+                              </div>
+                              <div
+                                style={{ fontSize: 6 }}
+                                className=" d-flex align-self-center"
+                              >
+                                {event?.oraInizio?.slice(0, -3)}
+                                {" / "}
+                                {event?.oraFine?.slice(0, -3)}
+                              </div>
+
                               <Button
                                 variant="danger"
                                 size="sm"
@@ -310,51 +393,67 @@ export function SezioneCalendario() {
                                   e.preventDefault();
                                   deleteEvent(event, utente.email);
                                 }}
-                                className="rounded-circle"
+                                className="rounded-circle border border-1 border-white"
                               >
                                 <FaTrashAlt />
                               </Button>
-                           </div>
-                              
-                        
-                      ),
-                    }}
-                    onDropFromOutside={(args) =>
-                      onDropFromOutside(utente.email, args)
-                    }
-                    onEventDrop={(args) => {
-                      moveEvent(utente.email, args);
-                    }}
-                    onSelectEvent={handleSelectEvent}
-                    draggableAccessor={() => true}
-                    eventPropGetter={(event) => {
-                      if (event.idFromDb === null) {
-                        return {
-                          className: " bg-warning",
-                        };
-                      } else {
-                        return {
-                          className: "",
-                        };
-                      }
-                    }}
-                  />
-                </Col>
-                <Col
-                  md={1}
-                  className=" align-self-center p-2 rounded-2 bg-info text-white"
-                >
-                  <h6>Ore settimanali</h6>
-                  {events?.reduce((acc, curev) => {
-                    if (curev.calendarId === utente.email)
-                      return acc + curev.oreTurno;
-                    else return acc;
-                  }, 0)}
-                </Col>
-              </Row>
-            </>
-          );
-        })}
+                            </div>
+                          ),
+                        }}
+                        onDropFromOutside={(args) =>
+                          onDropFromOutside(utente.email, args)
+                        }
+                        onEventDrop={(args) => {
+                          moveEvent(utente.email, args);
+                        }}
+                        onSelectEvent={handleSelectEvent}
+                        draggableAccessor={() => true}
+                        eventPropGetter={(event) => {
+                          const key = `${
+                            event.title
+                          }-${event.start.toLocaleDateString("en-CA")}`;
+                          if (eventCounts[key] == 2) {
+                            return {
+                              className: "bg-success text-white",
+                            };
+                          } else if (event.idFromDb === null) {
+                            return {
+                              className: "bg-warning",
+                            };
+                          } else {
+                            return {
+                              className: " bg-secondary",
+                            };
+                          }
+                        }}
+                      />
+                    </Col>
+                    <Col
+                      md={1}
+                      className=" align-self-center p-2 rounded-2 bg-info text-white"
+                    >
+                      {!settMens ? (
+                        <>
+                          <h6>Ore settimanali</h6>
+
+                          {events?.reduce((acc, curev) => {
+                            if (curev.calendarId === utente.email)
+                              return acc + curev.oreTurno;
+                            else return acc;
+                          }, 0)}
+                        </>
+                      ) : (
+                        <>
+                        <h6>Ore mensili</h6>
+                        <span>{oreMensUtenti.filter(ore => ore.email === utente.email).map(ore => ore.sommaOra)}</span>
+                        </>
+                      )}
+                    </Col>
+                  </Row>
+                </>
+              );
+            })
+        )}
       </Container>
 
       <Button

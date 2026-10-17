@@ -19,7 +19,7 @@ export function SezioneTurni() {
   const dispatch = useDispatch();
   const[allTurni,setAllTurni] = useState([])
   const token = useSelector((state)=> state.auth.token)
-  const [addNomeTurno, setAddNomeTurno] = useState("")
+  const [addNomeTurno, setAddNomeTurno] = useState(null)
   const [spinnerAddTurno, setSpinnerAddTurno] = useState(false)
   const [spinnerTurni, setSpinnerTurni] = useState(false)
   const [addOraInizio, setAddOraInizio] = useState(null);
@@ -91,11 +91,11 @@ export function SezioneTurni() {
         }
       );
       const content = await response.json();
+      if (!response.ok) throw new Error(content.message);
       getTurni();
       setCheckMod("");
     } catch (error) {
-      const content = await response.json();
-      console.log(content);
+      console.log("Errore nella modifica del turno", error.message);
     } finally {
       setAddOraFine(null)
       setAddOraInizio(null)
@@ -124,11 +124,11 @@ export function SezioneTurni() {
         }
       );
       const content = await response.json();
+      if (!response.ok) throw new Error(content.message);
       getTurni();
       setAddNomeTurno("")
     } catch (error) {
-      const content = await response.json();
-      console.log(content);
+      console.log("Errore nell'aggiunta del turno", error.message);
     } finally { setSpinnerAddTurno(false)}
   };
   const delTurno = async (turnoDelete) => {
@@ -144,10 +144,13 @@ export function SezioneTurni() {
        
         }
       );
+      if (!response.ok) {
+        const content = await response.json();
+        throw new Error(content.message);
+      }
       getTurni();
     } catch (error) {
-      const content = await response.json();
-      console.log(content);
+      console.log("Errore nell'eliminazione del turno", error.message);
     }
   };
   return (
@@ -319,6 +322,7 @@ export function SezioneTurni() {
                     <Form.Check label="Turno a cavallo della mezzanotte" value={afterMidnight} onChange={(e) => setAfterMidnght(e.target.checked)}/>
                     
                     <Button
+                      disabled={(addNomeTurno && addOraInizio && addOraFine) ? false : true}
                       onClick={(e) => {
                         e.preventDefault()
                         addTurno()
