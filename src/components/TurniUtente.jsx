@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import moment from "moment";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 import { Calendar } from "react-big-calendar";
-import { localizer, messaggiCalendario } from "../utils/calendario";
+import { formatiCalendario, localizer, messaggiCalendario } from "../utils/calendario";
+import useIsMobile from "../utils/useIsMobile";
+import EventoAgenda from "./EventoAgenda";
 import {
   Button,
   Col,
@@ -14,18 +17,15 @@ import {
 import { Link } from "react-router-dom";
 
 export default function TurniUtente() {
+  const isMobile = useIsMobile();
   const [utenti, setUtenti] = useState([]);
   const [events, setEvents] = useState([]);
   const [utenteTurni, setUtenteTurni] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [mailUt, setMailUt] = useState("");
-  const auth = useSelector((state) => state.auth);
+  const api = useApi();
+  const { notifica } = useNotifiche();
 
-  moment.updateLocale("it", {
-    week: {
-      dow: 1,
-    },
-  });
   /////////////////////////
   const getCurrentWeekMonday = () => {
     const today = new Date();
@@ -55,28 +55,19 @@ export default function TurniUtente() {
   const handleNavigate = (newDate) => {
     const newMonday = getMonday(newDate);
     setDate(newMonday);
-    console.log(date);
   };
 
   useEffect(() => {
     getUtenti();
     getTurniUtente();
-    console.log(date);
   }, [date]);
 
   const getUtenti = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenti`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const content = await response.json();
+      const content = await api("/utenti");
       setUtenti(content);
     } catch (error) {
-      console.log("Errore nell fetch utenti");
+      notifica(error.message);
     }
   };
   const handleUtente = (ut) => {
@@ -97,19 +88,7 @@ export default function TurniUtente() {
 
   const getTurniUtente = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
-          "en-CA"
-        )}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const content = await response.json();
+      const content = await api(`/utenteturno/settimanali?dataInizio=${date.toLocaleDateString("en-CA")}`);
       setUtenteTurni(content);
 
       const newEvents = content.map((turno, index) => ({
@@ -125,7 +104,7 @@ export default function TurniUtente() {
       }));
       setEvents(newEvents);
     } catch (error) {
-      console.log("Errore nell fetch turni");
+      notifica(error.message);
     }
   };
 
@@ -186,18 +165,21 @@ export default function TurniUtente() {
                       className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
                       localizer={localizer}
                       culture="it"
+                      formats={formatiCalendario}
                       messages={messaggiCalendario}
                       defaultDate={getCurrentWeekMonday()}
                       date={date}
                       events={getEventsForCalendar(utente.email)}
                       onNavigate={handleNavigate}
-                      defaultView="week"
-                      views={["week"]}
+                      defaultView={isMobile ? "agenda" : "week"}
+                      views={isMobile ? ["agenda"] : ["week"]}
+                      length={7}
                       startAccessor="start"
                       endAccessor="end"
                       selectable={true}
                       onSelectEvent={handleSelEvent}
                       components={{
+                        agenda: { event: EventoAgenda, time: () => null },
                         event: ({ event }) => (
                           <span style={{ fontSize: "0.8em" }}>
                             {event.title} <br />

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
-import moment from "moment";
 import { Calendar } from "react-big-calendar";
-import { localizer, messaggiCalendario } from "../utils/calendario";
+import { formatiCalendario, localizer, messaggiCalendario } from "../utils/calendario";
+import useIsMobile from "../utils/useIsMobile";
+import EventoAgenda from "./EventoAgenda";
 import { Button, Col, Container, Row } from "react-bootstrap";
 
 import { useSelector } from "react-redux";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 import { useCookies } from "react-cookie";
 
 function CambioTurno() {
+  const isMobile = useIsMobile();
   const [cookies, setCookie] = useCookies(['utentiRispondenti'])
   const currentUtente = useSelector((state) => state.user.utente);
   const [rispostaRichOk, setRispostaRichOk] = useState(false)
@@ -17,14 +21,10 @@ function CambioTurno() {
   const [utenteCambioObj, setUtenteCambioObj] = useState({});
   const [selectedTurnoCur, setSelectedTurnoCur] = useState(null);
   const [selectedTurnoCam, setSelectedTurnoCam] = useState(null);
-  const token = useSelector((state) => state.auth.token);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const [events, setEvents] = useState([]);
 
-  moment.updateLocale("it", {
-    week: {
-      dow: 1,
-    },
-  });
 
   const getCurrentWeekMonday = () => {
     const today = new Date();
@@ -43,35 +43,16 @@ function CambioTurno() {
 
   const utenteCambio = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenti/` + email, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const content = await response.json();
+      const content = await api(`/utenti/${email}`);
       setUtenteCambioObj(content);
     } catch (error) {
-      console.log("Errore nell fetch utenti");
+      notifica(error.message);
     }
   };
 
   const getTurniUtente = async (utenteMail) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
-          "en-CA"
-        )}&email=${utenteMail}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const content = await response.json();
+      const content = await api(`/utenteturno/settimanali?dataInizio=${date.toLocaleDateString("en-CA")}&email=${utenteMail}`);
 
       const newEvents = content.map((turno, index) => ({
         id: index,
@@ -83,40 +64,26 @@ function CambioTurno() {
       }));
       setEvents((prev) => [...prev, ...newEvents]);
     } catch (error) {
-      console.log("Errore nell fetch turni");
+      notifica(error.message);
     }
   };
 
   const richiediCambio = async () => {
     try {
-        const response = await fetch(
-          `${import.meta.env.VITE_URL}/cambioturno/me`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                nomeTurnoRich: selectedTurnoCur.title,
-                dataTurnoRich: selectedTurnoCur.start.toLocaleDateString('en-CA'),
-                emailRis: selectedTurnoCam.calendarId,
-                nomeTurnoRis: selectedTurnoCam.title,
-                dataTurnoRis: selectedTurnoCam.start.toLocaleDateString('en-CA')
-            })
-          }
-        );
-       if(!response.ok){
-         const content = await response.json()
-         throw new Error(content.message)
-       }
-       else {
-        setRispostaRichOk(true)
-       }
-        
-      } catch (error) {
-        setErroreRichiesta(error.message)
-      }
+      await api("/cambioturno/me", {
+        method: "POST",
+        body: {
+          nomeTurnoRich: selectedTurnoCur.title,
+          dataTurnoRich: selectedTurnoCur.start.toLocaleDateString('en-CA'),
+          emailRis: selectedTurnoCam.calendarId,
+          nomeTurnoRis: selectedTurnoCam.title,
+          dataTurnoRis: selectedTurnoCam.start.toLocaleDateString('en-CA')
+        },
+      });
+      setRispostaRichOk(true)
+    } catch (error) {
+      setErroreRichiesta(error.message)
+    }
   }
 
   function handleCurSel(event) {
@@ -136,7 +103,6 @@ function CambioTurno() {
   const handleNavigate = (newDate) => {
     const newMonday = getMonday(newDate);
     setDate(newMonday);
-    console.log(date);
   };
 
   const getEventsForCalendar = (calendarId) => {
@@ -148,13 +114,13 @@ function CambioTurno() {
   }
 
   useEffect(() => {
-    console.log(email);
-    console.log(currentUtente.email);
+    // Ricaricando la pagina l'utente corrente arriva dopo: senza la sua email il calendario resterebbe vuoto
+    if (!currentUtente.email) return;
     setEvents([]);
     utenteCambio();
     getTurniUtente(email);
     getTurniUtente(currentUtente.email);
-  }, [date]);
+  }, [date, email, currentUtente.email]);
 
   return (
     <>
@@ -192,13 +158,16 @@ function CambioTurno() {
             <Calendar
               localizer={localizer}
               culture="it"
+              formats={formatiCalendario}
+              components={{ agenda: { event: EventoAgenda, time: () => null } }}
               messages={messaggiCalendario}
               date={date}
               events={getEventsForCalendar(currentUtente.email)}
               className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
               onNavigate={handleNavigate}
-              defaultView="week"
-              views={["week"]}
+              defaultView={isMobile ? "agenda" : "week"}
+              views={isMobile ? ["agenda"] : ["week"]}
+                      length={7}
               startAccessor="start"
               endAccessor="end"
               selectable={true}
@@ -214,13 +183,16 @@ function CambioTurno() {
             <Calendar
               localizer={localizer}
               culture="it"
+              formats={formatiCalendario}
+              components={{ agenda: { event: EventoAgenda, time: () => null } }}
               messages={messaggiCalendario}
               date={date}
               events={getEventsForCalendar(utenteCambioObj.email)}
               className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
               onNavigate={handleNavigate}
-              defaultView="week"
-              views={["week"]}
+              defaultView={isMobile ? "agenda" : "week"}
+              views={isMobile ? ["agenda"] : ["week"]}
+                      length={7}
               startAccessor="start"
               endAccessor="end"
               selectable={true}

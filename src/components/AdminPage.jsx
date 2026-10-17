@@ -1,71 +1,46 @@
-import { useDispatch, useSelector } from "react-redux";
-import CreazioneTurni from "./CreazioneTurni";
-import { BrowserRouter, Link, Route, Routes, useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { Route, Routes } from "react-router-dom";
+import { addUserAction } from "../redux/actions";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
+import Caricamento from "./Caricamento";
 import NavAdmin from "./NavAdmin";
-import RegistraUtente from "./RegistraUtente";
-import { addUserAction, removeRoleAction, removeTokenAction } from "../redux/actions";
-import { useEffect, useState } from "react";
-import ProfilePage from "./ProfilePage";
-import GestisciFerie from "./GestisciFerie";
-import GestisciCambi from "./GestisciCambi";
-import GestisciUtenti from "./GestisciUtenti";
-import { Button } from "react-bootstrap";
+
+const CreazioneTurni = lazy(() => import("./CreazioneTurni"));
+const RegistraUtente = lazy(() => import("./RegistraUtente"));
+const ProfilePage = lazy(() => import("./ProfilePage"));
+const GestisciFerie = lazy(() => import("./GestisciFerie"));
+const GestisciCambi = lazy(() => import("./GestisciCambi"));
+const GestisciUtenti = lazy(() => import("./GestisciUtenti"));
 
 export default function AdminPage() {
-  const auth = useSelector((state) => state.auth);
-  const [errorMe, setErrorMe] = useState(null)
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const api = useApi();
+  const { notifica } = useNotifiche();
 
-  const getUtente = async () => {
-    try {
-        const response = await fetch(`${import.meta.env.VITE_URL}/utenti/me`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if(response.ok){
-          const content = await response.json();
-          dispatch(addUserAction(content));
-
-        }
-        else {
-          const content = await response.json()
-          throw new Error(content.message)
-        }
-      } catch (error){
-        console.log("Errore nell'utente", error.message);
-        setErrorMe(error.message)
-      }
-  }
-
-  useEffect(()=> {
-    getUtente()
-  },[])
-
+  useEffect(() => {
+    // Con il token scaduto useApi avvisa e riporta al login
+    api("/utenti/me")
+      .then((utente) => dispatch(addUserAction(utente)))
+      .catch((error) => {
+        if (error.status !== 401) notifica(error.message);
+      });
+  }, []);
 
   return (
     <>
-      {errorMe === "Problemi con il token, rifare il login" ? (<p className=" bg-white w-50 mx-auto p-4 text-center mt-2 rounded-2"> La sessione è scaduta torna alla pagina di <Button onClick={() => {
-        dispatch(removeTokenAction())
-        dispatch(removeRoleAction())
-        navigate('/')
-      }}>Login</Button></p>) : (
-        <>
-             <NavAdmin/>
-          <Routes>
-           
-            <Route path="creazione_turni" element={<CreazioneTurni />} />
-            <Route path="registra_utente" element={<RegistraUtente />} />
-            <Route path="me" element={<ProfilePage/>}/>
-            <Route path="gestisci_ferie" element={<GestisciFerie/>}/>
-            <Route path="gestisci_cambi" element={<GestisciCambi/>}/>
-            <Route path="gestisci_utenti" element={<GestisciUtenti/>}/>
-          </Routes>
-        </>
-      )}
+      <NavAdmin />
+      <Suspense fallback={<Caricamento />}>
+        <Routes>
+          <Route path="creazione_turni" element={<CreazioneTurni />} />
+          <Route path="registra_utente" element={<RegistraUtente />} />
+          <Route path="me" element={<ProfilePage />} />
+          <Route path="gestisci_ferie" element={<GestisciFerie />} />
+          <Route path="gestisci_cambi" element={<GestisciCambi />} />
+          <Route path="gestisci_utenti" element={<GestisciUtenti />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }

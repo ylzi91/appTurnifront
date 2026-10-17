@@ -15,10 +15,13 @@ import { FaPen } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { removeTokenAction, removeRoleAction, addUserAction } from "../redux/actions";
 import { useNavigate } from "react-router-dom";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 
 export default function ProfilePage() {
   const meUser = useSelector((state) => state.user.utente);
-  const token = useSelector((state) => state.auth.token);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [nome, setNome] = useState(meUser.nome);
@@ -43,51 +46,23 @@ export default function ProfilePage() {
 
     try {
       setSpinnerAvatar(true)
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/utenti/me/avatar`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-      if (response.ok) {
-        const result = await response.json();
-        setUrlImg(result.message);
-      } else {
-        console.error("Error uploading the file:", response.statusText);
-      }
+      const result = await api("/utenti/me/avatar", { method: "PATCH", body: formData });
+      setUrlImg(result.message);
     } catch (error) {
-      console.error("Error uploading the file:", error);
+      notifica(error.message);
     } finally{setSpinnerAvatar(false)}
   };
 
   const putNomeCognome = async () => {
     try {
       setSpinnerNome(true)
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenti/me/nome_cognome`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ nome, cognome }),
-      });
-      if (!response.ok){
-        const content = await response.json()
-        throw new Error(content.message);
-      }
-      else{
-        const content = await response.json()
-        setNome(content.nome)
-        setCognome(content.cognome)
-        dispatch(addUserAction(content))
-      } 
+      const content = await api("/utenti/me/nome_cognome", { method: "PUT", body: { nome, cognome } });
+      setNome(content.nome)
+      setCognome(content.cognome)
+      dispatch(addUserAction(content))
+      notifica("Nome e cognome aggiornati", "success")
     } catch (error) {
-      console.log("Errore post",error.message);
-      
+      notifica(error.message);
     } finally { setSpinnerNome(false)}
   };
 
@@ -105,30 +80,16 @@ export default function ProfilePage() {
     else
     try {
       setSpinnerAggPass(true)
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenti/me/password`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ oldPassword, newPassword }),
-      });
-      if (!response.ok){
-        const content = await response.json()
-        throw new Error(content.message);
-      }
-      else {
-        setErrorePas({
-          message: "Password salvata correttamente",
-          error: false
-        })
-        setTimeout(() => {
-          setErrorePas(null)
-        }, 5000);
-      }
+      await api("/utenti/me/password", { method: "PATCH", body: { oldPassword, newPassword } });
+      setErrorePas({
+        message: "Password salvata correttamente",
+        error: false
+      })
+      setTimeout(() => {
+        setErrorePas(null)
+      }, 5000);
       setNewPassword("")
       setOldPassword("")
-      
     } catch (error) {
       setErrorePas({
         message: error.message,
@@ -137,7 +98,6 @@ export default function ProfilePage() {
       setTimeout(() => {
         setErrorePas(null)
       }, 5000);
-      
     } finally {setSpinnerAggPass(false)}
   };
 

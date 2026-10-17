@@ -14,12 +14,15 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { addAllTurniAction, setDraggedEvent } from "../redux/actions";
 import { FaBackspace, FaCheck, FaPen, FaTrashAlt } from "react-icons/fa";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 
 export function SezioneTurni() {
   const dispatch = useDispatch();
   const[allTurni,setAllTurni] = useState([])
-  const token = useSelector((state)=> state.auth.token)
-  const [addNomeTurno, setAddNomeTurno] = useState(null)
+  const api = useApi()
+  const { notifica } = useNotifiche()
+  const [addNomeTurno, setAddNomeTurno] = useState("")
   const [spinnerAddTurno, setSpinnerAddTurno] = useState(false)
   const [spinnerTurni, setSpinnerTurni] = useState(false)
   const [addOraInizio, setAddOraInizio] = useState(null);
@@ -51,24 +54,11 @@ export function SezioneTurni() {
   const getTurni = async () => {
     try {
       setSpinnerTurni(true)
-      const response = await fetch(`${import.meta.env.VITE_URL}/turni`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if(response.ok){
-        const content = await response.json();
-        setAllTurni(content)
-      }
-      else {
-        const content = await response.json()
-        throw new Error(content)
-      }
-      
+      const content = await api("/turni");
+      // Senza turni il backend risponde con un messaggio invece di una lista
+      setAllTurni(Array.isArray(content) ? content : [])
     } catch (error) {
-      console.log("Errore nell fetch turni", error);
+      notifica(error.message);
     } finally {
       setSpinnerTurni(false)
     }
@@ -76,81 +66,45 @@ export function SezioneTurni() {
 
   const modTurno = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/turni/${checkMod}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            oraInizio: addOraInizio,
-            oraFine: addOraFine,
-          }),
-        }
-      );
-      const content = await response.json();
-      if (!response.ok) throw new Error(content.message);
+      await api(`/turni/${checkMod}`, {
+        method: "PATCH",
+        body: { oraInizio: addOraInizio, oraFine: addOraFine },
+      });
       getTurni();
       setCheckMod("");
     } catch (error) {
-      console.log("Errore nella modifica del turno", error.message);
+      notifica(error.message);
     } finally {
       setAddOraFine(null)
       setAddOraInizio(null)
     }
   };
 
-  
-
   const addTurno = async () => {
     try {
       setSpinnerAddTurno(true)
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/turni`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nomeTurno: addNomeTurno,
-            oraInizio: addOraInizio,
-            oraFine: addOraFine,
-            isAfterMidnight: afterMidnight
-          }),
-        }
-      );
-      const content = await response.json();
-      if (!response.ok) throw new Error(content.message);
+      await api("/turni", {
+        method: "POST",
+        body: {
+          nomeTurno: addNomeTurno,
+          oraInizio: addOraInizio,
+          oraFine: addOraFine,
+          isAfterMidnight: afterMidnight,
+        },
+      });
       getTurni();
       setAddNomeTurno("")
     } catch (error) {
-      console.log("Errore nell'aggiunta del turno", error.message);
+      notifica(error.message);
     } finally { setSpinnerAddTurno(false)}
   };
+
   const delTurno = async (turnoDelete) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/turni/${turnoDelete}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-       
-        }
-      );
-      if (!response.ok) {
-        const content = await response.json();
-        throw new Error(content.message);
-      }
+      await api(`/turni/${turnoDelete}`, { method: "DELETE" });
       getTurni();
     } catch (error) {
-      console.log("Errore nell'eliminazione del turno", error.message);
+      notifica(error.message);
     }
   };
   return (
@@ -161,7 +115,7 @@ export function SezioneTurni() {
           <Col className=" d-flex flex-column align-content-center custom-scrollbar py-2">
             
             
-              {spinnerTurni ? <Spinner className=" align-self-center" variant="info" animation="border"/> : allTurni?.sort((turnA, turnB) => {
+              {spinnerTurni ? <Spinner className=" align-self-center" variant="info" animation="border"/> : [...allTurni].sort((turnA, turnB) => {
                 let oraA = turnA.oraInizio ? turnA.oraInizio?.split(':')?.map(Number) : [0]
                 let oraB = turnB.oraInizio ? turnB.oraInizio?.split(':')?.map(Number) : [0]
                 return oraA[0] - oraB[0] 

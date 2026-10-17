@@ -10,7 +10,8 @@ import {
   Spinner,
   ToggleButton,
 } from "react-bootstrap";
-import { useSelector } from "react-redux";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 
 function GestisciFerie() {
   const [richiesteFerie, setRichiesteFerie] = useState([]);
@@ -27,7 +28,8 @@ function GestisciFerie() {
   ]);
   const [cliccatoPuls, setCliccatoPuls] = useState("Tutte");
   const [st, setSt] = useState("");
-  const auth = useSelector((state) => state.auth);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const [errore, setErrore] = useState("");
   const [arrayVuoto, setArrayVuoto] = useState(false);
   const [spinnerConcedi, setSpinnerConcedi] = useState(null)
@@ -38,91 +40,36 @@ function GestisciFerie() {
   const getFerie = async () => {
     try {
       setSpinnerFerie(true)
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/ferie?statoRichiesta=${st}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        const content = await response.json();
-        console.log("Errore nella risposta del server:", content);
-        throw new Error(content);
-      } else {
-        const content = await response.json();
-        if (content.message) setArrayVuoto(true);
-        else {
-          setRichiesteFerie(content);
-          setArrayVuoto(false);
-        }
+      const content = await api(`/ferie?statoRichiesta=${st}`)
+      // Con nessuna richiesta il backend risponde con un messaggio invece di una lista
+      if (!Array.isArray(content)) setArrayVuoto(true);
+      else {
+        setRichiesteFerie(content);
+        setArrayVuoto(false);
       }
     } catch (error) {
       setErrore(error.message);
-      console.log("Errore nella get", error.message);
+      notifica(error.message)
     } finally {setSpinnerFerie(false)}
   };
 
   const patchFerie = async (idFerie, statoRichiesta) => {
     try {
       setSpinnerConcedi(idFerie)
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/ferie/aod/${idFerie}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            statoRichiesta: statoRichiesta,
-          }),
-        }
-      );
-      if (!response.ok) {
-        const content = await response.json();
-        throw new Error(content.message);
-      } else {
-        getFerie()
-      }
+      await api(`/ferie/aod/${idFerie}`, { method: "PATCH", body: { statoRichiesta } })
+      getFerie()
     } catch (error) {
-      console.log("Errore nella get", error.message);
+      notifica(error.message)
     } finally {setSpinnerConcedi(null)}
   };
 
   const saveFerieTurni = async (ferieId) => {
     try {
       setSpinnerAggiorna(ferieId)
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/utenteturno/${ferieId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        const content = await response.json();
-        console.log("Errore nella risposta del server:", content);
-        throw new Error(content.message);
-      } else {
-        const content = await response.json();
-        setErroreFerie({
-          message: content.message,
-          id: ferieId,
-        });
-      }
+      const content = await api(`/utenteturno/${ferieId}`, { method: "POST" })
+      setErroreFerie({ message: content.message, id: ferieId });
     } catch (error) {
-      setErroreFerie({
-        message: error.message,
-        id: ferieId,
-      });
-      console.log("Errore nella saveTurniFerie", error.message);
+      setErroreFerie({ message: error.message, id: ferieId });
     } finally { setSpinnerAggiorna(null)}
   };
 

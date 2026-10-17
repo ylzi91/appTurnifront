@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import moment from "moment";
-import "moment/locale/it";
 import { Calendar } from "react-big-calendar";
 import { localizer, messaggiCalendario } from "../utils/calendario";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -49,28 +49,37 @@ export function SezioneCalendario() {
   const [utenti, setUtenti] = useState([]);
   const [utenteTurni, setUtenteTurni] = useState([]);
   const [utenteTurniDelete, setUtenteTurniDelete] = useState([]);
-  const token = useSelector((state) => state.auth.token);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const titleCounts = {};
   const dispatch = useDispatch();
 
-  moment.updateLocale("it", {
-    week: {
-      dow: 1,
-    },
-  });
+  const modificheNonSalvate =
+    events.some((event) => event.idFromDb === null) || utenteTurniDelete.length > 0;
 
   const handleNavigate = (newDate) => {
+    if (
+      modificheNonSalvate &&
+      !window.confirm("Hai modifiche non salvate: cambiando settimana andranno perse. Continuare?")
+    )
+      return;
+    setUtenteTurniDelete([]);
     setDate(newDate);
-    console.log(date);
   };
+
+  // Avvisa anche se si chiude o si ricarica la pagina con modifiche non salvate
+  useEffect(() => {
+    if (!modificheNonSalvate) return;
+    const avvisa = (e) => e.preventDefault();
+    window.addEventListener("beforeunload", avvisa);
+    return () => window.removeEventListener("beforeunload", avvisa);
+  }, [modificheNonSalvate]);
   /*const handleDragStart = (event) => {
       setDraggedEvent(event);
     };*/
 
   const deleteEvent = useCallback((event, calendarId) => {
-    console.log("event", event);
     setUtenteTurniDelete((prev) => [...prev, event]);
-    console.log("Eliminati", utenteTurniDelete);
     setEvents((prev) =>
       prev.filter((ev) => ev.id !== event.id || ev.calendarId !== calendarId)
     );
@@ -78,7 +87,6 @@ export function SezioneCalendario() {
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
-    console.log(selectedEvent);
   };
   const getNextMonday = () => {
     const day = date.getDay();
@@ -90,8 +98,6 @@ export function SezioneCalendario() {
   useEffect(() => {
     getUtenti();
     getTurniUtente();
-    console.log(date);
-    console.log("bello", import.meta.env.URL);
   }, [date]);
 
   useEffect(() => {
@@ -103,22 +109,12 @@ export function SezioneCalendario() {
   const getUtenti = async () => {
     try {
       setSpinnerCalendar(true);
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenti`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const content = await response.json();
+      const content = await api("/utenti");
       setUtenti(content);
-
-      //dispatch(addAllUtentiAction(content));
     } catch (error) {
-      console.log("Errore nell fetch turni");
+      notifica(error.message);
     } finally {
       setSpinnerCalendar(false);
-      //getTurniUtente()
     }
   };
 
@@ -129,48 +125,26 @@ export function SezioneCalendario() {
 
   const getTurniUtente = async () => {
     try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_URL
-        }/utenteturno/settimanali?dataInizio=${date.toLocaleDateString(
-          "en-CA"
-        )}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (response.ok) {
-        const content = await response.json();
-        //setUtenteTurni(content);
-        //dispatch(addAllUtentTurniAction(content));
-
-        const newEvents = content.map((turno, index) => ({
-          id: index,
-          idFromDb: turno.id,
-          title: turno.turno.nomeTurno,
-          start: parseDate(turno.giornoTurno),
-          end: parseDate(turno.giornoTurno),
-          calendarId: turno.utente.email,
-          oreTurno: turno.turno.durataTurno,
-          oraInizio: turno.turno.oraInizio,
-          oraFine: turno.turno.oraFine,
-        }));
-        console.log("NewEvents", newEvents);
-        setEvents(newEvents);
-      } else {
-        const content = await response.json();
-        throw new Error(content);
-      }
+      const content = await api(`/utenteturno/settimanali?dataInizio=${date.toLocaleDateString("en-CA")}`);
+      const newEvents = content.map((turno, index) => ({
+        id: index,
+        idFromDb: turno.id,
+        title: turno.turno.nomeTurno,
+        start: parseDate(turno.giornoTurno),
+        end: parseDate(turno.giornoTurno),
+        calendarId: turno.utente.email,
+        oreTurno: turno.turno.durataTurno,
+        oraInizio: turno.turno.oraInizio,
+        oraFine: turno.turno.oraFine,
+      }));
+      setEvents(newEvents);
     } catch (error) {
-      console.log("content", error);
+      notifica(error.message);
     }
   };
 
   const oreMensiliUtenti = async () => {
+    if (utenti.length === 0) return; // senza email il backend rifiuta la richiesta
     const emailForFetch = utenti
       .map((utente) => `emails=${encodeURIComponent(utente.email)}`)
       .join("&");
@@ -180,79 +154,35 @@ export function SezioneCalendario() {
     const firstDay = new Date(year, month, 1);
 
     try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_URL
-        }/utenteturno/ore_totali_utente?${emailForFetch}&dataInizio=${firstDay.toLocaleDateString(
-          "en-CA"
-        )}&dataFine=${lastDay.toLocaleDateString("en-CA")}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const content = await api(
+        `/utenteturno/ore_totali_utente?${emailForFetch}&dataInizio=${firstDay.toLocaleDateString("en-CA")}&dataFine=${lastDay.toLocaleDateString("en-CA")}`
       );
-      if (response.ok) {
-        const content = await response.json();
-        setOreMensUtenti(content);
-      } else {
-        const content = await response.json();
-        throw new Error(content.message);
-      }
+      setOreMensUtenti(content);
     } catch (error) {
-      console.log("Errore nella get", error.message);
+      notifica(error.message);
     }
   };
 
   const deleteAndUpdateTurni = async () => {
+    const toDto = (ev) => ({
+      nomeTurno: ev.title,
+      dataTurno: ev.start.toLocaleDateString("en-CA"),
+      emailDipendente: ev.calendarId,
+      idFromDb: ev.idFromDb,
+    });
     try {
       setSpinnerUpdate(true);
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenteturno`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          utenteTurniDelete.map((utd) => {
-            return {
-              nomeTurno: utd.title,
-              dataTurno: utd.start.toLocaleDateString("en-CA"),
-              emailDipendente: utd.calendarId,
-              idFromDb: utd.idFromDb,
-            };
-          })
-        ),
-      });
+      if (utenteTurniDelete.length > 0)
+        await api("/utenteturno", { method: "DELETE", body: utenteTurniDelete.map(toDto) });
       setUtenteTurniDelete([]);
-      console.log("eventi", events);
-      setSpinnerUpdate(true);
-      const response2 = await fetch(`${import.meta.env.VITE_URL}/utenteturno`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          events.map((ev) => {
-            return {
-              nomeTurno: ev.title,
-              dataTurno: ev.start.toLocaleDateString("en-CA"),
-              emailDipendente: ev.calendarId,
-              idFromDb: ev.idFromDb,
-            };
-          })
-        ),
-      });
+      await api("/utenteturno", { method: "POST", body: events.map(toDto) });
+      notifica("Tabella turni aggiornata", "success");
+    } catch (error) {
+      notifica(error.message);
+    } finally {
+      // Si ricarica sempre dal server: mostra lo stato vero anche se il salvataggio è fallito a metà
       getTurniUtente();
       oreMensiliUtenti();
-
-      const content = await response2.json();
-    } catch (error) {
-      console.log("Errore nell'update");
-    } finally {
       setSpinnerUpdate(false);
     }
   };
@@ -292,7 +222,6 @@ export function SezioneCalendario() {
     const counts = {};
     events.forEach((event) => {
       const key = `${event.title}-${event.start.toLocaleDateString("en-CA")}`;
-      console.log("key", key);
       if (!counts[key]) {
         counts[key] = 0;
       }
@@ -375,29 +304,27 @@ export function SezioneCalendario() {
                         onNavigate={handleNavigate}
                         components={{
                           event: ({ event }) => (
-                            <div className="d-flex align-content-center justify-content-between flex-wrap">
-                              <div className=" d-flex align-self-center">
-                                {event.title}
+                            <div className="d-flex align-items-center justify-content-between gap-1">
+                              <div className=" lh-1">
+                                <strong>{event.title}</strong>
+                                <div style={{ fontSize: "0.7rem" }}>
+                                  {event?.oraInizio?.slice(0, -3)}
+                                  {event?.oraInizio && "–"}
+                                  {event?.oraFine?.slice(0, -3)}
+                                </div>
                               </div>
-                              <div
-                                style={{ fontSize: 6 }}
-                                className=" d-flex align-self-center"
-                              >
-                                {event?.oraInizio?.slice(0, -3)}
-                                {" / "}
-                                {event?.oraFine?.slice(0, -3)}
-                              </div>
-
                               <Button
                                 variant="danger"
                                 size="sm"
+                                title="Rimuovi il turno (si salva con «Aggiorna tabella»)"
+                                aria-label="Rimuovi il turno"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   deleteEvent(event, utente.email);
                                 }}
-                                className="rounded-circle border border-1 border-white"
+                                className=" p-0 px-1 lh-1"
                               >
-                                <FaTrashAlt />
+                                <FaTrashAlt size={10} />
                               </Button>
                             </div>
                           ),
@@ -458,14 +385,11 @@ export function SezioneCalendario() {
         )}
       </Container>
 
+      {modificheNonSalvate && (
+        <span className=" badge text-bg-warning me-2">Modifiche non salvate</span>
+      )}
       <Button
-        disabled={
-          events.findIndex(
-            (event) => event.idFromDb === null || utenteTurniDelete.length > 0
-          ) === -1
-            ? true
-            : false
-        }
+        disabled={!modificheNonSalvate}
         className=" mb-2"
         onClick={() => {
           deleteAndUpdateTurni();

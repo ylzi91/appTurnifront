@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
-import { useSelector } from "react-redux";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 import CambioInfo from "./CambioInfo";
 import Aldoo from "../assets/img/Aldooo.png"
 
 function GestisciCambi() {
-  const token = useSelector((state) => state.auth.token);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const [cambiTurni, setCambiTurni] = useState([]);
   const [spinnerTurni, setSpinnerTurni] = useState(false)
   const [erroreCambio, setErroreCambio] = useState(null)
@@ -13,20 +15,11 @@ function GestisciCambi() {
   const tuttiCambi = async () => {
     try {
       setSpinnerTurni(true)
-      const response = await fetch(`${import.meta.env.VITE_URL}/cambioturno`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const content = await response.json();
-        if (!content.message) setCambiTurni(content);
-        else setCambiTurni(content);
-      }
-    } catch (error) {}
-    finally {
+      const content = await api("/cambioturno")
+      setCambiTurni(Array.isArray(content) ? content : [])
+    } catch (error) {
+      notifica(error.message)
+    } finally {
       setSpinnerTurni(false)
     }
   };
@@ -34,27 +27,9 @@ function GestisciCambi() {
   const patchCambio = async (idCambio, statoRichiesta) => {
     try {
       setErroreCambio(null)
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/cambioturno/${idCambio}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            "statoRichiesta": statoRichiesta
-          }),
-        }
-      );
-      if (!response.ok) {
-        const content = await response.json();
-        throw new Error(content.message);
-      } else {
-        tuttiCambi()
-      }
+      await api(`/cambioturno/${idCambio}`, { method: "PATCH", body: { statoRichiesta } })
+      tuttiCambi()
     } catch (error) {
-      console.log("Errore nella get", error.message);
       setErroreCambio(error.message)
     }
   };

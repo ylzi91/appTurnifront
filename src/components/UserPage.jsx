@@ -1,96 +1,48 @@
-import { useDispatch, useSelector } from "react-redux";
-import { addUserAction, removeRoleAction, removeTokenAction } from "../redux/actions";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { Route, Routes } from "react-router-dom";
+import { addUserAction } from "../redux/actions";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
+import Caricamento from "./Caricamento";
 import NavUser from "./NavUser";
-import { useEffect, useState } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
-import { Button } from "react-bootstrap";
-import ProfilePage from "./ProfilePage";
-import TurniUtente from "./TurniUtente";
-import RichiediFerie from "./RichediFerie";
-import CambioTurno from "./CambioTurno";
-import VediCambi from "./VediCambi";
+
+const ProfilePage = lazy(() => import("./ProfilePage"));
+const TurniUtente = lazy(() => import("./TurniUtente"));
+const RichiediFerie = lazy(() => import("./RichediFerie"));
+const CambioTurno = lazy(() => import("./CambioTurno"));
+const VediCambi = lazy(() => import("./VediCambi"));
 
 export default function UserPage() {
-  const auth = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const [cambiInIngresso, setCambiInIngresso] = useState([]);
-  const [errorUser, setErrorUser] = useState(null);
-
-  const getUtente = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_URL}/utenti/me`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const content = await response.json();
-        dispatch(addUserAction(content));
-      } else {
-        const content = await response.json();
-        throw new Error(content.message);
-      }
-    } catch (error) {
-      console.log("Errore nell'utente", error.message);
-      setErrorUser(error.message);
-    }
-  };
-
-  const cambiIngresso = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/cambioturno/me/ingresso/in_corso`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (response.ok) {
-        const content = await response.json();
-        if (content.message === null) setCambiInIngresso(content);
-        else setCambiInIngresso(content);
-      }
-    } catch (error) {}
-  };
 
   useEffect(() => {
-    getUtente();
-    cambiIngresso();
+    // Con il token scaduto useApi avvisa e riporta al login
+    api("/utenti/me")
+      .then((utente) => dispatch(addUserAction(utente)))
+      .catch((error) => {
+        if (error.status !== 401) notifica(error.message);
+      });
+    api("/cambioturno/me/ingresso/in_corso")
+      .then((cambi) => setCambiInIngresso(Array.isArray(cambi) ? cambi : []))
+      .catch(() => {}); // il contatore sulla navbar è accessorio
   }, []);
+
   return (
     <>
-      {errorUser === "Problemi con il token, rifare il login" ? (
-        <p className=" bg-white w-50 mx-auto p-4 text-center mt-2 rounded-2">
-          {" "}
-          La sessione è scaduta torna alla pagina di{" "}
-          <Button
-            onClick={() => {
-              dispatch(removeTokenAction());
-              dispatch(removeRoleAction());
-              navigate("/");
-            }}
-          >
-            Login
-          </Button>
-        </p>
-      ) : (
-        <>
-          <NavUser cambIng={cambiInIngresso.length} />
-          <Routes>
-            <Route path="me" element={<ProfilePage />} />
-            <Route path="turni" element={<TurniUtente />} />
-            <Route path="ferie" element={<RichiediFerie />} />
-            <Route path="cambioturno/:email" element={<CambioTurno />} />
-            <Route path="vedi_cambi" element={<VediCambi />} />
-          </Routes>
-        </>
-      )}
+      <NavUser cambIng={cambiInIngresso.length} />
+      <Suspense fallback={<Caricamento />}>
+        <Routes>
+          <Route path="me" element={<ProfilePage />} />
+          <Route path="turni" element={<TurniUtente />} />
+          <Route path="ferie" element={<RichiediFerie />} />
+          <Route path="cambioturno/:email" element={<CambioTurno />} />
+          <Route path="vedi_cambi" element={<VediCambi />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }

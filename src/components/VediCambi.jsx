@@ -1,65 +1,38 @@
-import { use } from "react";
 import { useEffect, useState } from "react";
 import { Button, Card, Col, Container, Row } from "react-bootstrap";
 import { TiDeleteOutline } from "react-icons/ti";
 import { useSelector } from "react-redux";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 import CambioInfo from "./CambioInfo";
 
 function VediCambi() {
   const currentUtente = useSelector((state) => state.user.utente);
-  const token = useSelector((state) => state.auth.token);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const [cambiTurni, setCambiTurni] = useState([]);
   const [stato, setStato] = useState("uscita");
-  const [buttonSwitch, setButtonSwitch] = useState(["In uscita", "In entrata"]);
+  const buttonSwitch = ["In uscita", "In entrata"];
   const [selBtn, setSelBtn] = useState("In uscita");
 
   const mieiCambi = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/cambioturno/me/${stato}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (response.ok) {
-        const content = await response.json();
-        if (content.message === null) setCambiTurni(content);
-        else setCambiTurni(content);
-      }
-    } catch (error) {}
-  };
-  const handleStato = () => {
-    if (stato === "uscita") setStato("ingresso");
-    else if (stato === "ingresso") setStato("uscita");
+      const content = await api(`/cambioturno/me/${stato}`);
+      setCambiTurni(content);
+    } catch (error) {
+      notifica(error.message);
+    }
   };
 
   const patchCambio = async (idCambio, statoRichiesta) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_URL}/cambioturno/me/ingresso/${idCambio}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            "statoRichiesta": statoRichiesta
-          }),
-        }
-      );
-      if (!response.ok) {
-        const content = await response.json();
-        throw new Error(content.message);
-      } else {
-        mieiCambi()
-      }
+      await api(`/cambioturno/me/ingresso/${idCambio}`, {
+        method: "PATCH",
+        body: { statoRichiesta },
+      });
+      mieiCambi();
     } catch (error) {
-      console.log("Errore nella get", error.message);
+      notifica(error.message);
     }
   };
 
@@ -78,8 +51,8 @@ function VediCambi() {
                   key={btn}
                   value={btn}
                   onClick={(e) => {
-                    setSelBtn(e.target.value);
-                    handleStato();
+                    setSelBtn(btn);
+                    setStato(btn === "In entrata" ? "ingresso" : "uscita");
                   }}
                   variant={selBtn === btn ? "primary" : "outline-primary"}
                   className=" me-2 mb-2"
@@ -96,7 +69,7 @@ function VediCambi() {
               <span className=" bg-white p-1 rounded-2 text-info fw-bold">Non ci sono cambi in {stato}</span>
             )}
             {cambiTurni.length >= 0 &&
-              cambiTurni?.sort((cambio1, cambio2) => cambio2.id - cambio1.id)?.map((cambio) => {
+              Array.isArray(cambiTurni) && [...cambiTurni].sort((cambio1, cambio2) => cambio2.id - cambio1.id).map((cambio) => {
                 return (
                   <Card
                     key={cambio.id}

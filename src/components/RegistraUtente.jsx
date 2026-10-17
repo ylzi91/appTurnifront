@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Card, Form, Spinner } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import useApi from "../utils/useApi";
 
 export default function RegistraUtente() {
   const [email, setEmail] = useState("");
@@ -10,46 +11,32 @@ export default function RegistraUtente() {
   const [utenteCapo, checkUtenteCapo] = useState(false);
   const [response, setResponse] = useState("")
   const [spinner, setSpinner] = useState(false)
-  const auth = useSelector((state) => state.auth);
+  const api = useApi();
+  const role = useSelector((state) => state.auth.role);
 
   const register = async () => {
     try {
-        setSpinner(true)
-        let content;
-        const response = await fetch(`${import.meta.env.VITE_URL}/utenti/${!utenteCapo ? 'utente' : 'capo'}`, {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${auth.token}`
-            },
-            body: JSON.stringify({email, password, nome, cognome})
-        })
-        if(response.ok){
-            content = await response.json()
-             setResponse("Registrazione effettuata con successo")
-             setCognome("")
-             setNome("")
-             setEmail("")
-             setPassword("")
-             setTimeout(() => {
-                setResponse("")
-             }, 2000)   
-        }
-        else 
-        {
-            content = await response.json()
-            console.log(content)
-            throw new Error(content.message)
-        }
-       
+      setSpinner(true)
+      await api(`/utenti/${!utenteCapo ? 'utente' : 'capo'}`, {
+        method: "POST",
+        body: { email, password, nome, cognome },
+      })
+      setResponse("Registrazione effettuata con successo")
+      setCognome("")
+      setNome("")
+      setEmail("")
+      setPassword("")
+      setTimeout(() => {
+        setResponse("")
+      }, 2000)
     } catch (error){
-            setResponse(error.message)
+      setResponse(error.message)
     } finally {setSpinner(false)}
-}
+  }
 
   return (
     <>
-      <Card className="text-center w-25 mx-auto mt-5 bg-body-tertiary">
+      <Card className="text-center mx-auto mt-5 mx-3 bg-body-tertiary" style={{ maxWidth: 420 }}>
         <Card.Header>App Turnisitici</Card.Header>
         <Card.Body>
           <Card.Text>
@@ -99,7 +86,7 @@ export default function RegistraUtente() {
                   placeholder="Cognome"
                 />
               </Form.Group>
-              {auth.role === "ADMIN" && (
+              {role === "ADMIN" && (
                 <Form.Group className=" border border-3 rounded-1 mb-1 w-50 mx-auto">
                   <Form.Label>
                     Utente capo

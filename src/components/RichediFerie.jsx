@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Badge, Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import DatePicker from "react-datepicker";
-import { useSelector } from "react-redux";
 import "react-datepicker/dist/react-datepicker.css";
 import { TiDeleteOutline } from "react-icons/ti";
 import { formattaData } from "../utils/format";
+import useApi from "../utils/useApi";
+import { useNotifiche } from "./Notifiche";
 
 export default function RichiediFerie() {
-  const auth = useSelector((state) => state.auth);
+  const api = useApi();
+  const { notifica } = useNotifiche();
   const [errore, setErrore] = useState("")
   const [spinner, setSpinner] = useState(false)
   const [dataInizio, setDataInizio] = useState(
@@ -24,79 +26,36 @@ export default function RichiediFerie() {
   const postFerie = async () => {
     try {
       setSpinner(true)
-      const response = await fetch(`${import.meta.env.VITE_URL}/ferie`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ dataInizio, dataFine }),
-      });
-      if (!response.ok){
-        
-        const content = await response.json()
-        throw new Error(content.message);
-      }
-      else{
-        getFerie()
-      } 
+      await api("/ferie", { method: "POST", body: { dataInizio, dataFine } })
+      getFerie()
     } catch (error) {
-      console.log("Errore post",error.message);
       setErrore(error.message)
       setTimeout(() => {setErrore("")}, 4000)
     } finally {
       setSpinner(false)
     }
-
   };
 
   const getFerie = async () => {
-    try{
-      const response = await fetch(`${import.meta.env.VITE_URL}/ferie/me`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          "Content-Type": "application/json",
-        },
-      })
-      if(!response.ok){
-        const content = await response.json()
-        throw new Error(content.message)
-      } 
-      else {
-        const content = await response.json()
-        setGiorniFerie(content)
-      }
-      
-    } catch (error){
-      console.log('Errore nella get',error.message)
-
+    try {
+      const content = await api("/ferie/me")
+      setGiorniFerie(Array.isArray(content) ? content : [])
+    } catch (error) {
+      notifica(error.message)
     }
   }
 
   const delFerie = async (idFerie) => {
-    try{
-      const response = await fetch(`${import.meta.env.VITE_URL}/ferie/${idFerie}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-          "Content-Type": "application/json",
-        },
-      })
-      if(!response.ok){
-        const content = await response.json()
-        throw new Error(content.message)
-      } 
+    try {
+      await api(`/ferie/${idFerie}`, { method: "DELETE" })
       getFerie()
-    } catch (error){
-      console.log(error)
-
+    } catch (error) {
+      notifica(error.message)
     }
   }
 
   useEffect(() => {
     getFerie()
-    console.log("ggFerie",giorniFerie)
   } ,[])
 
   return (
@@ -137,7 +96,7 @@ export default function RichiediFerie() {
         </Row>
         <Row className=" justify-content-center">
           <Col lg={4}>
-          {giorniFerie.length >= 0 ? giorniFerie.map((gf)=> {
+          {giorniFerie.length > 0 ? giorniFerie.map((gf)=> {
             return (
               <Card key={gf.id} className=" my-2 shadow position-relative"  body>
                 <p className=" mb-1">Dal <strong>{formattaData(gf.dataInizio)}</strong> al <strong>{formattaData(gf.dataFine)}</strong></p>

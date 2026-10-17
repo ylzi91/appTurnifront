@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { addRoleAction, addTokenAction } from "../redux/actions";
 import   Appturn  from '../assets/img/Appturn.png'
+import { apiFetch } from "../utils/api";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -37,35 +38,10 @@ export default function Login() {
     try {
       setSpinner(true);
       setErrorLogin(null);
-      const response = await fetch(`${import.meta.env.VITE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (response.ok) {
-        const content = await response.json();
-        dispatch(addTokenAction(content.accessToken));
-        dispatch(addRoleAction(content.role));
-        switch (content.role) {
-          case "ADMIN": {
-            navigate("/admin_page/creazione_turni");
-            break;
-          }
-          case "USER": {
-            navigate("/user_page/me");
-            break;
-          }
-          case "CAPO": {
-            navigate("/admin_page/creazione_turni");
-            break;
-          }
-        }
-      } else {
-        const content = await response.json().catch(() => ({}));
-        throw new Error(content.message || "Errore nel login, riprova più tardi");
-      }
+      const content = await apiFetch("/auth/login", { method: "POST", body: { email, password } });
+      dispatch(addTokenAction(content.accessToken));
+      dispatch(addRoleAction(content.role));
+      navigate(content.role === "USER" ? "/user_page/me" : "/admin_page/creazione_turni");
     } catch (error) {
       setErrorLogin(error.message);
     } finally {
