@@ -1,5 +1,7 @@
 import moment from "moment";
 import { momentLocalizer } from "react-big-calendar";
+// Lo stile sta qui, accanto al localizer: lo importa ogni pagina con un calendario (utente e admin)
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
 // Solo l'italiano che serve al calendario: "moment-with-locales" aggiungeva quasi 300 kB
 moment.defineLocale("it", {

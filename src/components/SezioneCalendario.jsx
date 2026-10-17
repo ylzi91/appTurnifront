@@ -5,7 +5,6 @@ import useApi from "../utils/useApi";
 import { useNotifiche } from "./Notifiche";
 
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
   Button,
   Col,
