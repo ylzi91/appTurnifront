@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import {
   Accordion,
   Button,
@@ -168,11 +168,9 @@ export function SezioneTurni() {
               }
               )?.map((turno) => {
                 return (
-                  <>
+                  <Fragment key={turno.nomeTurno}>
                   <Dropdown className=" mt-2">
                     <Dropdown.Toggle
-                      key={turno.nomeTurno}
-                      action
                       draggable
                       className=" w-100 border border-2 shadow border-white rounded-5"
                       onDragStart={() => {
@@ -266,7 +264,7 @@ export function SezioneTurni() {
                     </Dropdown.Item>
                     </Dropdown.Menu>
                     </Dropdown>
-                  </>
+                  </Fragment>
                 );
               })}
             

@@ -344,7 +344,7 @@ export function SezioneCalendario() {
             })
             .map((utente, index) => {
               return (
-                <>
+                <React.Fragment key={utente.email}>
                   <Row className=" mt-2 bg-body-secondary p-2 border border-1 border-black rounded-1">
                     <Col md={2} className=" align-self-center">
                       <div className=" d-flex justify-content-beetween bg-info p-2 rounded-2 text-white">
@@ -450,7 +450,7 @@ export function SezioneCalendario() {
                       )}
                     </Col>
                   </Row>
-                </>
+                </React.Fragment>
               );
             })
         )}
