@@ -7,6 +7,7 @@ function GestisciCambi() {
   const token = useSelector((state) => state.auth.token);
   const [cambiTurni, setCambiTurni] = useState([]);
   const [spinnerTurni, setSpinnerTurni] = useState(false)
+  const [erroreCambio, setErroreCambio] = useState(null)
 
   const tuttiCambi = async () => {
     try {
@@ -31,6 +32,7 @@ function GestisciCambi() {
 
   const patchCambio = async (idCambio, statoRichiesta) => {
     try {
+      setErroreCambio(null)
       const response = await fetch(
         `${import.meta.env.VITE_URL}/cambioturno/${idCambio}`,
         {
@@ -52,6 +54,7 @@ function GestisciCambi() {
       }
     } catch (error) {
       console.log("Errore nella get", error.message);
+      setErroreCambio(error.message)
     }
   };
   useEffect(() => {
@@ -61,6 +64,11 @@ function GestisciCambi() {
   return (
     <>
       <Container fluid>
+        {erroreCambio && (
+          <Alert variant="danger" className=" mt-2" dismissible onClose={() => setErroreCambio(null)}>
+            {erroreCambio}
+          </Alert>
+        )}
         <Row>
            
             {spinnerTurni ? <Spinner style={{width: 50, height: 50}} className=" border-0" animation="border" size="sm"><img className=" rounded-circle" src={Aldoo} width={50} height={50} alt="" /></Spinner> : cambiTurni.length === 0 && <span>Non ci sono cambi</span>}
