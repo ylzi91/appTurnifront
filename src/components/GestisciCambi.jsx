@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
 import { useSelector } from "react-redux";
+import CambioInfo from "./CambioInfo";
 import Aldoo from "../assets/img/Aldooo.png"
 
 function GestisciCambi() {
@@ -80,28 +81,7 @@ function GestisciCambi() {
                     className=" mt-2 text-center shadow position-relative pt-4"
                     body
                   >
-                    <div className=" bg-body-secondary p-2 rounded-2 mb-2 mx-auto">
-                      <p>
-                        Richiedente cambio,{" "}
-                        {cambio.utenteRichiedenteTurno.utente.nome}{" "}
-                        {cambio.utenteRichiedenteTurno.utente.cognome} il{" "}
-                        {cambio.utenteRichiedenteTurno.giornoTurno}
-                      </p>
-                      <p className=" mb-0">
-                        Turno: {cambio.utenteRichiedenteTurno.turno.nomeTurno}
-                      </p>
-                    </div>
-                    <div className=" bg-dark-subtle p-2 rounded-2 mb-2 mx-autov fs-6">
-                      <p>
-                        Concedente cambio,{" "}
-                        {cambio.utenteRispondenteTurno.utente.nome}{" "}
-                        {cambio.utenteRispondenteTurno.utente.cognome}:{" "}
-                        {cambio.utenteRispondenteTurno.giornoTurno}
-                      </p>
-                      <p className=" mb-0">
-                        Turno: {cambio.utenteRispondenteTurno.turno.nomeTurno}
-                      </p>
-                    </div>
+                    <CambioInfo cambio={cambio} />
                     {cambio.statoRichiesta === "APPROVATA_RISPONDENTE" && (
                       <>
                         {cambio.avvisi?.length > 0 && (

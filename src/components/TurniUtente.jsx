@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import moment from "moment";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar } from "react-big-calendar";
+import { localizer, messaggiCalendario } from "../utils/calendario";
 import {
   Button,
   Col,
@@ -19,7 +20,6 @@ export default function TurniUtente() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [mailUt, setMailUt] = useState("");
   const auth = useSelector((state) => state.auth);
-  const localizer = momentLocalizer(moment);
 
   moment.updateLocale("it", {
     week: {
@@ -185,6 +185,8 @@ export default function TurniUtente() {
                     <Calendar
                       className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
                       localizer={localizer}
+                      culture="it"
+                      messages={messaggiCalendario}
                       defaultDate={getCurrentWeekMonday()}
                       date={date}
                       events={getEventsForCalendar(utente.email)}

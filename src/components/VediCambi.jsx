@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button, Card, Col, Container, Row } from "react-bootstrap";
 import { TiDeleteOutline } from "react-icons/ti";
 import { useSelector } from "react-redux";
+import CambioInfo from "./CambioInfo";
 
 function VediCambi() {
   const currentUtente = useSelector((state) => state.user.utente);
@@ -102,24 +103,7 @@ function VediCambi() {
                     className=" my-2 text-center shadow position-relative pt-4"
                     body
                   >
-                    <div className=" bg-body-secondary p-2 rounded-2 mb-2 mx-auto">
-                      <p>
-                        Richiedente cambio <span className=" d-block bg-info p-2 rounded-5 text-white">{cambio.utenteRichiedenteTurno.utente.nome} {cambio.utenteRichiedenteTurno.utente.cognome}</span>  il{" "}
-                        <span className=" d-block bg-info text-white p-2 rounded-5">{cambio.utenteRichiedenteTurno.giornoTurno}</span>
-                  
-                        <span className=" d-block bg-info rounded-5 text-white mt-2 p-2">Turno {cambio.utenteRichiedenteTurno.turno.nomeTurno}</span>
-                      </p>
-                    </div>
-                    <div className=" bg-dark-subtle p-2 rounded-2 mb-2 mx-autov fs-6">
-                      <p>
-                        Concedente cambio
-                        <span className=" d-block bg-info p-2 rounded-5 text-white">{cambio.utenteRispondenteTurno.utente.nome}{" "}
-                        {cambio.utenteRispondenteTurno.utente.cognome}</span> il {" "}
-                        <span className=" d-block bg-info text-white p-2 rounded-5">{cambio.utenteRispondenteTurno.giornoTurno}</span>
-                      
-                        <span className=" d-block bg-info rounded-5 text-white mt-2 p-2">Turno {cambio.utenteRispondenteTurno.turno.nomeTurno}</span>
-                      </p>
-                    </div>
+                    <CambioInfo cambio={cambio} />
                     <p>Stato: {(cambio.statoRichiesta === "RIFIUTATA_RISPONDENTE" && cambio.utenteRichiedenteTurno.utente.email === currentUtente.email) ? 
                     "La richiesta è stata rifutata dal collega" :  
                     (cambio.statoRichiesta === "RIFIUTATA_RISPONDENTE" && cambio.utenteRispondenteTurno.utente.email === currentUtente.email) ? 

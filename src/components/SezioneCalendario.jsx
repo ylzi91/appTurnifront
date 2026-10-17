@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import moment from "moment";
 import "moment/locale/it";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar } from "react-big-calendar";
+import { localizer, messaggiCalendario } from "../utils/calendario";
 
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -22,7 +23,6 @@ import {
 } from "../redux/actions";
 import { FaTrashAlt } from "react-icons/fa";
 const DnDCalendar = withDragAndDrop(Calendar);
-const localizer = momentLocalizer(moment);
 
 export function SezioneCalendario() {
   const [events, setEvents] = useState([]);
@@ -363,6 +363,8 @@ export function SezioneCalendario() {
                       <DnDCalendar
                         className=" bg-body-tertiary p-2 rounded-2 text-info"
                         localizer={localizer}
+                        culture="it"
+                        messages={messaggiCalendario}
                         events={getEventsForCalendar(utente.email)}
                         startAccessor="start"
                         endAccessor="end"

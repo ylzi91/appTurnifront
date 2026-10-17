@@ -18,6 +18,7 @@ import Login from "./components/Login";
 import AdminPage from "./components/AdminPage";
 
 import UserPage from "./components/UserPage";
+import RequireRole from "./components/RequireRole";
 
 
 function App() {
@@ -27,8 +28,8 @@ function App() {
     <BrowserRouter>
     <Routes>
       <Route path="/" element= {<Login/>}/>
-      <Route path="/admin_page/*" element={<AdminPage/>}/>
-      <Route path="/user_page/*" element={<UserPage/>}/>
+      <Route path="/admin_page/*" element={<RequireRole ruoli={["ADMIN", "CAPO"]}><AdminPage/></RequireRole>}/>
+      <Route path="/user_page/*" element={<RequireRole ruoli={["USER"]}><UserPage/></RequireRole>}/>
     </Routes>
     </BrowserRouter>
 

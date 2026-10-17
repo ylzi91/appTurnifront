@@ -1,37 +1,43 @@
-import { Badge, Container, Nav, Navbar } from "react-bootstrap";
+import { Badge, Button, Container, Nav, Navbar } from "react-bootstrap";
+import { CiLogout } from "react-icons/ci";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import   Appturn  from '../assets/img/Appturn.png'
+import { Link, NavLink } from "react-router-dom";
+import Appturn from '../assets/img/Appturn.png'
+import useLogout from "../utils/useLogout";
 
 export default function NavUser({ cambIng }) {
-    const utente = useSelector((state) => state.user.utente)
+  const utente = useSelector((state) => state.user.utente)
+  const logout = useLogout()
   return (
-    <Navbar expand="lg" data-bs-theme="dark" className=" bg-dark mb-2">
+    <Navbar expand="lg" collapseOnSelect data-bs-theme="dark" className=" bg-dark mb-2">
       <Container fluid>
-        <Navbar.Brand href="#home"><img className=" rounded-circle" src={Appturn} style={{width: 50}} alt="" /></Navbar.Brand>
+        <Navbar.Brand as={Link} to="/user_page/turni"><img className=" rounded-circle" src={Appturn} style={{width: 50}} alt="AppTurni" /></Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Link to="/user_page/turni" className=" nav-link">
+            <Nav.Link as={NavLink} to="/user_page/turni" eventKey="turni">
               Vedi Turni
-            </Link>
-            <Link to="/user_page/ferie" className=" nav-link">
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/user_page/ferie" eventKey="ferie">
               Richiedi ferie
-            </Link>
-            <Link to="/user_page/vedi_cambi" className=" nav-link">Vedi cambi {(cambIng > 0) && <Badge bg="danger">{cambIng}</Badge>} </Link>
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/user_page/vedi_cambi" eventKey="cambi">
+              Vedi cambi {(cambIng > 0) && <Badge bg="danger">{cambIng}</Badge>}
+            </Nav.Link>
           </Nav>
-          <div className=" d-flex align-items-center justify-content-end w-25">
-            <Link
-              to="/user_page/me"
-              className=" nav-link align-self-center me-3 text-white"
-            >
+          <div className=" d-flex align-items-center gap-3 ms-lg-auto">
+            <Nav.Link as={NavLink} to="/user_page/me" eventKey="profilo" className=" text-white">
               <img
                 src={utente.immagine}
                 className=" rounded-circle"
-                style={{ width: 30, height:30 }}
+                style={{ width: 30, height: 30 }}
+                alt=""
               />{" "}
               {utente.nome} {utente.cognome}
-            </Link>
+            </Nav.Link>
+            <Button variant="outline-light" size="sm" onClick={logout}>
+              <CiLogout /> Esci
+            </Button>
           </div>
         </Navbar.Collapse>
       </Container>

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
 import moment from "moment";
-import { Calendar, momentLocalizer } from "react-big-calendar";
+import { Calendar } from "react-big-calendar";
+import { localizer, messaggiCalendario } from "../utils/calendario";
 import { Button, Col, Container, Row } from "react-bootstrap";
 
 import { useSelector } from "react-redux";
@@ -18,7 +19,6 @@ function CambioTurno() {
   const [selectedTurnoCam, setSelectedTurnoCam] = useState(null);
   const token = useSelector((state) => state.auth.token);
   const [events, setEvents] = useState([]);
-  const localizer = momentLocalizer(moment);
 
   moment.updateLocale("it", {
     week: {
@@ -191,6 +191,8 @@ function CambioTurno() {
           <Col md={10} className=" bg-body-secondary pb-2">
             <Calendar
               localizer={localizer}
+              culture="it"
+              messages={messaggiCalendario}
               date={date}
               events={getEventsForCalendar(currentUtente.email)}
               className=" bg-body-tertiary p-2 rounded-2 text-info shadow"
@@ -211,6 +213,8 @@ function CambioTurno() {
           <Col md={10} className=" bg-body-secondary pb-2">
             <Calendar
               localizer={localizer}
+              culture="it"
+              messages={messaggiCalendario}
               date={date}
               events={getEventsForCalendar(utenteCambioObj.email)}
               className=" bg-body-tertiary p-2 rounded-2 text-info shadow"

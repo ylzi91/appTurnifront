@@ -79,8 +79,6 @@ export default function UserPage() {
             Login
           </Button>
         </p>
-      ) : auth.role !== "USER" ? (
-        <h1>NON puoi stare sulla pagina</h1>
       ) : (
         <>
           <NavUser cambIng={cambiInIngresso.length} />

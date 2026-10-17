@@ -52,9 +52,7 @@ export default function AdminPage() {
         dispatch(removeTokenAction())
         dispatch(removeRoleAction())
         navigate('/')
-      }}>Login</Button></p>) : (auth.role === "USER") ? (
-        <h1>NON puoi stare sulla pagina</h1>
-      ) : (
+      }}>Login</Button></p>) : (
         <>
              <NavAdmin/>
           <Routes>

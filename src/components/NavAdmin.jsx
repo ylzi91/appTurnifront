@@ -1,28 +1,34 @@
 import { Button, Container, Nav, Navbar } from "react-bootstrap";
 import { CiLogout } from "react-icons/ci";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import   Appturn  from '../assets/img/Appturn.png'
+import { Link, NavLink } from "react-router-dom";
+import Appturn from '../assets/img/Appturn.png'
+import useLogout from "../utils/useLogout";
+
 export default function NavAdmin() {
-    const utente = useSelector((state) => state.user.utente)
-    const role = useSelector(state => state.auth.role)
+  const utente = useSelector((state) => state.user.utente)
+  const logout = useLogout()
   return (
-    <Navbar expand="lg" className="bg-body-tertiary mb-2">
+    <Navbar expand="lg" collapseOnSelect className="bg-body-tertiary mb-2">
       <Container fluid>
-        <Navbar.Brand href="#home"><img className=" rounded-circle border border-black" src={Appturn} style={{width: 30}} alt="" /></Navbar.Brand>
+        <Navbar.Brand as={Link} to="/admin_page/creazione_turni"><img className=" rounded-circle border border-black" src={Appturn} style={{width: 30}} alt="AppTurni" /></Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Link to="/admin_page/creazione_turni" className=" nav-link">Tabella Turni</Link>
-            <Link to="/admin_page/gestisci_ferie" className=" nav-link">Gestisci ferie</Link>
-            <Link to="/admin_page/gestisci_cambi" className=" nav-link">Gestisci cambio turni</Link>
-            <Link to="/admin_page/registra_utente" className=" nav-link">Registra utente</Link>
-            <Link to="/admin_page/gestisci_utenti" className=" nav-link">Vedi e gestisci Utenti</Link>
+            <Nav.Link as={NavLink} to="/admin_page/creazione_turni" eventKey="turni">Tabella Turni</Nav.Link>
+            <Nav.Link as={NavLink} to="/admin_page/gestisci_ferie" eventKey="ferie">Gestisci ferie</Nav.Link>
+            <Nav.Link as={NavLink} to="/admin_page/gestisci_cambi" eventKey="cambi">Gestisci cambio turni</Nav.Link>
+            <Nav.Link as={NavLink} to="/admin_page/registra_utente" eventKey="registra">Registra utente</Nav.Link>
+            <Nav.Link as={NavLink} to="/admin_page/gestisci_utenti" eventKey="utenti">Vedi e gestisci Utenti</Nav.Link>
           </Nav>
-            <div className=" d-flex align-items-center justify-content-end w-25">
-                   <Link to="/admin_page/me" className=" nav-link align-self-center me-3"><img src={utente.immagine} className=" rounded-circle" style={{width: 30, height: 30}} /> {utente.nome} {utente.cognome}</Link>
-            </div>
-       
+          <div className=" d-flex align-items-center gap-3 ms-lg-auto">
+            <Nav.Link as={NavLink} to="/admin_page/me" eventKey="profilo">
+              <img src={utente.immagine} className=" rounded-circle" style={{width: 30, height: 30}} alt="" /> {utente.nome} {utente.cognome}
+            </Nav.Link>
+            <Button variant="outline-secondary" size="sm" onClick={logout}>
+              <CiLogout /> Esci
+            </Button>
+          </div>
         </Navbar.Collapse>
       </Container>
     </Navbar>

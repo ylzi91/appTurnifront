@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
+import { Badge, Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { useSelector } from "react-redux";
 import "react-datepicker/dist/react-datepicker.css";
 import { TiDeleteOutline } from "react-icons/ti";
+import { formattaData } from "../utils/format";
 
 export default function RichiediFerie() {
   const auth = useSelector((state) => state.auth);
@@ -139,10 +140,11 @@ export default function RichiediFerie() {
           {giorniFerie.length >= 0 ? giorniFerie.map((gf)=> {
             return (
               <Card key={gf.id} className=" my-2 shadow position-relative"  body>
-                <p>Data inizio: {gf.dataInizio}</p>
-                <p>Data fine: {gf.dataFine}</p>
-                <p>Stato: {gf.statoRichiesta === 'APPROVATO_CAPO' ? "Approvate" : gf.statoRichiesta === 'IN_CORSO' ? "In corso" : "Rifiutate"}</p>
-                {gf.statoRichiesta === 'IN_CORSO' && <p className=" position-absolute p-0 top-0 end-0 me-3 mt-2 pointer" onClick={(e) => {
+                <p className=" mb-1">Dal <strong>{formattaData(gf.dataInizio)}</strong> al <strong>{formattaData(gf.dataFine)}</strong></p>
+                <Badge bg={gf.statoRichiesta === 'APPROVATO_CAPO' ? "success" : gf.statoRichiesta === 'IN_CORSO' ? "warning" : "danger"} className=" align-self-start">
+                  {gf.statoRichiesta === 'APPROVATO_CAPO' ? "Approvate" : gf.statoRichiesta === 'IN_CORSO' ? "In corso" : "Rifiutate"}
+                </Badge>
+                {gf.statoRichiesta === 'IN_CORSO' && <p title="Annulla la richiesta" role="button" className=" position-absolute p-0 top-0 end-0 me-3 mt-2 pointer" onClick={(e) => {
                   e.preventDefault()
                   delFerie(gf.id)
                 }}><TiDeleteOutline size={30}/></p>}
