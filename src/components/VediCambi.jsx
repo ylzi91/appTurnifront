@@ -74,6 +74,7 @@ function VediCambi() {
             {buttonSwitch.map((btn) => {
               return (
                 <Button
+                  key={btn}
                   value={btn}
                   onClick={(e) => {
                     setSelBtn(e.target.value);

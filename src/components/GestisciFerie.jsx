@@ -159,6 +159,7 @@ function GestisciFerie() {
             {pulsantiFiltro.map((puls) => {
               return (
                 <Button
+                  key={puls}
                   value={puls}
                   onClick={(e) => {
                     setCliccatoPuls(e.target.value);

@@ -67,9 +67,8 @@ function GestisciCambi() {
             {cambiTurni.length >= 0 &&
               cambiTurni?.sort((cambio1, cambio2) => cambio2.id - cambio1.id)?.map((cambio) => {
                 return ( 
-                <Col md={4}>
+                <Col md={4} key={cambio.id}>
                   <Card
-                    key={cambio.id}
                     className=" mt-2 text-center shadow position-relative pt-4"
                     body
                   >

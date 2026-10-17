@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { addRoleAction, addTokenAction } from "../redux/actions";
@@ -11,10 +11,10 @@ export default function Login() {
   const [spinner, setSpinner] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorLogin, setErrorLogin] = useState(null);
   const myToken = useSelector((state) => state.auth.token);
   const myRole = useSelector((state) => state.auth.role);
   useEffect(() => {
-    console.log(myToken);
     if (myToken !== "") {
       switch (myRole) {
         case "ADMIN": {
@@ -36,6 +36,7 @@ export default function Login() {
   const getLogin = async () => {
     try {
       setSpinner(true);
+      setErrorLogin(null);
       const response = await fetch(`${import.meta.env.VITE_URL}/auth/login`, {
         method: "POST",
         headers: {
@@ -62,10 +63,11 @@ export default function Login() {
           }
         }
       } else {
-        throw new Error("Errore nel login");
+        const content = await response.json().catch(() => ({}));
+        throw new Error(content.message || "Errore nel login, riprova più tardi");
       }
     } catch (error) {
-      console.log(error);
+      setErrorLogin(error.message);
     } finally {
       setSpinner(false);
     }
@@ -110,6 +112,11 @@ export default function Login() {
                         placeholder="Password"
                       />
                     </Form.Group>
+                    {errorLogin && (
+                      <Alert variant="danger" className="py-2">
+                        {errorLogin}
+                      </Alert>
+                    )}
                     <Button variant="success" type="submit">
                       {!spinner ? (
                         "Effettua Login"
